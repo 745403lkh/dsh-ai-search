@@ -1,0 +1,7 @@
+# dsh-ai-search：AI 精选搜索模式
+#
+# 插入一个 Host 插件（HTTP 路由 + curated_search 工具）与一个 Client 模块
+# （侧边栏面板入口 + 搜索页）。Host 行 id、包名、Client 模块 id 三者一致。
+- insert:
+    - id: dsh-ai-search
+      name: 'dsh-ai-search'

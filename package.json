@@ -1,0 +1,33 @@
+{
+  "name": "dsh-ai-search",
+  "version": "1.4.2",
+  "private": true,
+  "type": "module",
+  "description": "AI 搜索模式：答疑 / 百科 / 浏览三模式，联网检索、广告过滤、AI 排序摘要与百科词条，支持结果语言、百科档位、浏览三指标权重、页面状态保留与搜索历史。",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "lib",
+    "locale/*.json",
+    "icon.svg",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}
