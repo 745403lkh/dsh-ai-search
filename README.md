@@ -1,2 +1,2 @@
-# 745403lkh-dsh-ai-search
-基于 DeepSeek Harness 的 AI 搜索，无广告。三种模式：答疑（摘要+推荐）、百科（可调档位）、浏览（图文视频信息流，相关性/时效性/热度加权）。支持结果语言与搜索历史。AI search based on DeepSeek Harness, ad-free. Three modes: Q&amp;A (summary+recommendations), Encyclopedia (adjustable depth), Browse (feed of articles/videos/images weighted by relevance, recency, popularity). Supports result language and search history.
+通过调用deepseek harness的搜索，提供快捷，简单，避免广告污染的ai搜索服务，三种搜索模式：答疑（摘要+推荐）、百科（可调档位的百科词条）、浏览（综合/视频/图片/文章的信息流，按相关性/时效性/热度加权）。支持结果语言与搜索历史。
+By leveraging the search capabilities of the DeepSeek harness, it provides a fast, simple AI search service that avoids ad pollution, with three search modes: Q&A (summary + recommendations), Encyclopedia (encyclopedia entries with adjustable levels), and Browse (an information feed of comprehensive/video/image/article content, weighted by relevance/recency/popularity). It supports result language and search history.
