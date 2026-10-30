@@ -1789,6 +1789,7 @@
         var resultState = React.useState(restore === null ? null : restore.result || null)
         var result = resultState[0]
         var setResult = resultState[1]
+        var coverRequestedRef = React.useRef({})
         var errorState = React.useState(restore === null ? '' : restore.error || '')
         var error = errorState[0]
         var setError = errorState[1]
@@ -1856,6 +1857,79 @@
             LAST_SEARCH_STATES[instanceId] = { draft: draft, mode: mode, status: status, result: result, error: error, board: board }
           },
           [draft, mode, status, result, error, board, instanceId],
+        )
+
+        // 视频封面懒补齐：首屏批量抓取可能被限流，渲染后对缺图视频逐条补一次，
+        // 保证同站视频最终都有封面（拿不到才保持纯文字卡片）。
+        React.useEffect(
+          function () {
+            if (result === null || result.mode !== 'browse') return undefined
+            var missing = (result.items || [])
+              .filter(function (item) {
+                return item.kind === 'video' && item.thumbnail === '' && coverRequestedRef.current[item.url] !== true
+              })
+              .slice(0, 12)
+            if (missing.length === 0) return undefined
+            var cancelled = false
+            Promise.resolve().then(async function () {
+              for (var index = 0; index < missing.length; index += 1) {
+                if (cancelled || !mountedRef.current) return
+                var target = missing[index]
+                coverRequestedRef.current[target.url] = true
+                var cover = ''
+                for (var attempt = 0; attempt < 2 && cover === ''; attempt += 1) {
+                  if (cancelled || !mountedRef.current) return
+                  try {
+                    var payload = await requestJson('/cover', { method: 'POST', body: { url: target.url } })
+                    cover = payload && typeof payload.thumbnail === 'string' ? payload.thumbnail : ''
+                  } catch (coverError) {
+                    cover = ''
+                  }
+                  if (cover === '' && attempt === 0) {
+                    await new Promise(function (resolve) {
+                      setTimeout(resolve, 800)
+                    })
+                  }
+                }
+                // Host 侧被限流时，B 站封面改用浏览器直连公开接口再试一次（不经过搜索代理）。
+                if (cover === '' && /bilibili\.com/.test(target.url)) {
+                  var bvidMatch = /\/video\/(BV[0-9A-Za-z]{10})/.exec(target.url) || /[?&]bvid=(BV[0-9A-Za-z]{10})/.exec(target.url)
+                  if (bvidMatch !== null && typeof fetch === 'function') {
+                    try {
+                      var biliResponse = await fetch('https://api.bilibili.com/x/web-interface/view?bvid=' + bvidMatch[1], { credentials: 'omit' })
+                      if (biliResponse.ok) {
+                        var biliData = await biliResponse.json()
+                        var pic = biliData && biliData.data ? biliData.data.pic : ''
+                        if (typeof pic === 'string' && pic !== '') {
+                          cover = pic.startsWith('//') ? 'https:' + pic : pic.replace(/^http:\/\//, 'https://')
+                        }
+                      }
+                    } catch (directError) {
+                      cover = ''
+                    }
+                  }
+                }
+                if (cancelled || !mountedRef.current || cover === '') continue
+                setResult(function (previous) {
+                  if (previous === null || previous.mode !== 'browse') return previous
+                  function patch(list) {
+                    return (list || []).map(function (item) {
+                      return item.url === target.url ? { ...item, thumbnail: cover } : item
+                    })
+                  }
+                  var nextBoards = {}
+                  Object.keys(previous.boards || {}).forEach(function (key) {
+                    nextBoards[key] = patch(previous.boards[key])
+                  })
+                  return { ...previous, items: patch(previous.items), boards: nextBoards }
+                })
+              }
+            })
+            return function () {
+              cancelled = true
+            }
+          },
+          [result],
         )
 
         var clearTimer = React.useCallback(function () {
