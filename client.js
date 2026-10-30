@@ -299,6 +299,30 @@
         officialMapImported: '已导入 {n} 条',
         officialMapImportEmpty: '文件里没有可导入的行（需要品牌名 + http(s) 官网首页）',
         officialMapImportError: '导入失败：{message}',
+        customApiSection: '自定义 API 和模型',
+        customApiHint: '默认使用 Harness 自带的搜索与模型服务；只有打开对应开关才走自己填写的接口。',
+        searchApiToggle: '自定义搜索 API',
+        searchApiToggleHint: '用它替换默认联网搜索（抓取正文仍用 Harness）。',
+        searchApiProvider: '搜索平台',
+        searchApiBaseUrl: '接口地址',
+        searchApiBaseUrlPlaceholder: '留空使用平台默认地址',
+        searchApiKey: 'API Key',
+        searchApiKeyPlaceholder: '搜索平台的 API Key（SearXNG 可留空）',
+        thinkingApiToggle: '自定义思考模型',
+        thinkingApiToggleHint: '用它替换 Harness 默认模型，用于摘要 / 评分 / 百科生成。',
+        thinkingBaseUrl: '接口地址（OpenAI 兼容）',
+        thinkingBaseUrlPlaceholder: '例如 https://api.deepseek.com/v1',
+        thinkingApiKey: 'API Key',
+        thinkingModel: '模型名',
+        thinkingModelPlaceholder: '例如 deepseek-chat',
+        thinkingEffort: '思考强度',
+        thinkingEffortAuto: '跟随模型',
+        thinkingEffortLow: '低',
+        thinkingEffortMedium: '中',
+        thinkingEffortHigh: '高',
+        customApiSave: '保存 API 设置',
+        customApiSaved: '已保存',
+        customApiInvalid: '保存失败：{message}',
         betterSidebarTabTitle: 'AI 搜索',
         betterSidebarTabDesc: '搜索网页并整理结果',
         betterSidebarLabel: '适配更好的侧边栏',
@@ -445,6 +469,30 @@
         officialMapImported: 'Imported {n} entries',
         officialMapImportEmpty: 'No importable rows (need a brand name and an http(s) homepage)',
         officialMapImportError: 'Import failed: {message}',
+        customApiSection: 'Custom API & models',
+        customApiHint: 'Harness services are used by default; the endpoints below apply only when the matching switch is on.',
+        searchApiToggle: 'Custom search API',
+        searchApiToggleHint: 'Replaces the default web search (page fetching still uses Harness).',
+        searchApiProvider: 'Search platform',
+        searchApiBaseUrl: 'Endpoint',
+        searchApiBaseUrlPlaceholder: 'Leave empty to use the platform default',
+        searchApiKey: 'API key',
+        searchApiKeyPlaceholder: 'API key of the search platform (optional for SearXNG)',
+        thinkingApiToggle: 'Custom thinking model',
+        thinkingApiToggleHint: 'Replaces the Harness default model for summaries / scoring / encyclopedia.',
+        thinkingBaseUrl: 'Endpoint (OpenAI compatible)',
+        thinkingBaseUrlPlaceholder: 'e.g. https://api.deepseek.com/v1',
+        thinkingApiKey: 'API key',
+        thinkingModel: 'Model',
+        thinkingModelPlaceholder: 'e.g. deepseek-chat',
+        thinkingEffort: 'Thinking effort',
+        thinkingEffortAuto: 'Model default',
+        thinkingEffortLow: 'Low',
+        thinkingEffortMedium: 'Medium',
+        thinkingEffortHigh: 'High',
+        customApiSave: 'Save API settings',
+        customApiSaved: 'Saved',
+        customApiInvalid: 'Save failed: {message}',
         betterSidebarTabTitle: 'AI Search',
         betterSidebarTabDesc: 'Search the web with AI curation',
         betterSidebarLabel: 'Better Sidebar integration',
@@ -684,6 +732,8 @@
         '.ais-custom-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);min-width:0}',
         '.ais-custom-name{flex:none;font-size:12px;line-height:18px;font-weight:600}',
         '.ais-custom-alias{flex:none;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-secondary)}',
+        '[data-dsh-ai-search-settings-nav] > svg:first-child{display:none}',
+        '[data-dsh-ai-search-settings-nav]::before{content:\'\';flex:none;width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2211%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22m21%2021-4.3-4.3%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2211%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22m21%2021-4.3-4.3%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat}',
         '.ais-custom-url{flex:1;min-width:0;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
         '.ais-custom-form{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}',
         '.ais-custom-input{box-sizing:border-box;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:18px;min-width:110px;flex:1 1 130px}',
@@ -2528,6 +2578,68 @@
         return rowsToOfficialSheet(rows)
       }
 
+      // ------------------------------------------------------------------
+      // 设置导航图标：settings.section 契约没有 icon 字段，只能给导航行打标记，
+      // 由 CSS mask 替换成放大镜（与 dsh-better-sidebar 同款适配）。
+      // ------------------------------------------------------------------
+      var SETTINGS_NAV_MARKER = 'data-dsh-ai-search-settings-nav'
+
+      function registerSettingsNavIcon(labelGetter) {
+        if (typeof document === 'undefined' || typeof MutationObserver !== 'function') return function () {}
+        var disposed = false
+        var frame = null
+        function sync() {
+          if (disposed) return
+          var label = typeof labelGetter === 'function' ? String(labelGetter() || '').trim() : ''
+          var buttons = document.querySelectorAll('[role="dialog"] nav button')
+          for (var index = 0; index < buttons.length; index += 1) {
+            var button = buttons[index]
+            if (label !== '' && String(button.textContent || '').trim() === label) button.setAttribute(SETTINGS_NAV_MARKER, '')
+            else button.removeAttribute(SETTINGS_NAV_MARKER)
+          }
+        }
+        function schedule() {
+          if (disposed || frame !== null || typeof requestAnimationFrame !== 'function') return
+          frame = requestAnimationFrame(function () {
+            frame = null
+            sync()
+          })
+        }
+        sync()
+        var observer = new MutationObserver(schedule)
+        observer.observe(document.body, { childList: true, subtree: true })
+        return function () {
+          disposed = true
+          observer.disconnect()
+          if (frame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame)
+          frame = null
+          var marked = document.querySelectorAll('[' + SETTINGS_NAV_MARKER + ']')
+          for (var index = 0; index < marked.length; index += 1) marked[index].removeAttribute(SETTINGS_NAV_MARKER)
+        }
+      }
+
+      /** 把服务端返回的 customApi 归一化成设置页状态（字段缺失时给默认值）。 */
+      function normalizeApiSnapshot(value) {
+        var raw = value !== null && typeof value === 'object' ? value : {}
+        var search = raw.search !== null && typeof raw.search === 'object' ? raw.search : {}
+        var thinking = raw.thinking !== null && typeof raw.thinking === 'object' ? raw.thinking : {}
+        return {
+          search: {
+            mode: search.mode === 'custom' ? 'custom' : 'harness',
+            provider: typeof search.provider === 'string' ? search.provider : 'tavily',
+            baseUrl: typeof search.baseUrl === 'string' ? search.baseUrl : '',
+            apiKey: typeof search.apiKey === 'string' ? search.apiKey : '',
+          },
+          thinking: {
+            mode: thinking.mode === 'custom' ? 'custom' : 'harness',
+            baseUrl: typeof thinking.baseUrl === 'string' ? thinking.baseUrl : '',
+            apiKey: typeof thinking.apiKey === 'string' ? thinking.apiKey : '',
+            model: typeof thinking.model === 'string' ? thinking.model : '',
+            reasoningEffort: ['auto', 'low', 'medium', 'high'].indexOf(thinking.reasoningEffort) >= 0 ? thinking.reasoningEffort : 'auto',
+          },
+        }
+      }
+
       function SettingsPage(props) {
         var locale = props && props.locale
         var localized = useLocale(locale)
@@ -2552,6 +2664,10 @@
           customSiteError: '',
           importMessage: '',
           importError: '',
+          customApi: normalizeApiSnapshot(null),
+          apiSaving: false,
+          apiMessage: '',
+          apiError: '',
           saving: false,
           saved: false,
           error: '',
@@ -2592,6 +2708,7 @@
                   defaultEngine: next.defaultEngine || 'ai',
                   customEngines: Array.isArray(next.customEngines) ? next.customEngines : [],
                   customOfficialSites: Array.isArray(next.customOfficialSites) ? next.customOfficialSites : [],
+                  customApi: normalizeApiSnapshot(next.customApi),
                 }
               })
             })
@@ -2639,6 +2756,7 @@
                   next.customOfficialSites = Array.isArray(payload.settings.customOfficialSites)
                     ? payload.settings.customOfficialSites
                     : previous.customOfficialSites
+                  next.customApi = normalizeApiSnapshot(payload.settings.customApi)
                 }
                 return next
               })
@@ -2899,6 +3017,35 @@
           },
           [settings.browseWeights, save],
         )
+
+        function updateApiField(kind, key, value) {
+          setSettings(function (previous) {
+            var next = normalizeApiSnapshot(previous.customApi)
+            next[kind][key] = value
+            return { ...previous, customApi: next, apiMessage: '', apiError: '' }
+          })
+        }
+
+        function saveCustomApi() {
+          if (settings.apiSaving) return
+          setSettings(function (previous) {
+            return { ...previous, apiSaving: true, apiMessage: '', apiError: '' }
+          })
+          save({ customApi: normalizeApiSnapshot(settings.customApi) })
+            .then(function () {
+              if (!aliveRef.current) return
+              setSettings(function (previous) {
+                return { ...previous, apiSaving: false, apiMessage: t('customApiSaved') }
+              })
+            })
+            .catch(function (error) {
+              if (!aliveRef.current) return
+              var message = error && error.message ? error.message : String(error)
+              setSettings(function (previous) {
+                return { ...previous, apiSaving: false, apiError: format(t('customApiInvalid'), { message: message }) }
+              })
+            })
+        }
 
         function clearHistory() {
           if (historyInfo.clearing) return
@@ -3297,6 +3444,166 @@
               h(
                 'div',
                 { className: 'ais-pref-group' },
+                h('div', { className: 'ais-pref-label' }, t('customApiSection')),
+                h('p', { className: 'ais-pref-hint' }, t('customApiHint')),
+                h(
+                  'div',
+                  { className: 'ais-pref-inline' },
+                  h(
+                    'div',
+                    { className: 'ais-pref-label-block' },
+                    h('div', { className: 'ais-pref-label' }, t('searchApiToggle')),
+                    h('p', { className: 'ais-pref-hint' }, t('searchApiToggleHint')),
+                  ),
+                  h('button', {
+                    type: 'button',
+                    role: 'switch',
+                    className: 'ais-switch',
+                    'aria-checked': settings.customApi.search.mode === 'custom' ? 'true' : 'false',
+                    'aria-label': t('searchApiToggle'),
+                    onClick: function () {
+                      updateApiField('search', 'mode', settings.customApi.search.mode === 'custom' ? 'harness' : 'custom')
+                    },
+                  }),
+                ),
+                settings.customApi.search.mode === 'custom'
+                  ? h(
+                      'div',
+                      null,
+                      h(
+                        'div',
+                        { className: 'ais-custom-form' },
+                        h(
+                          'select',
+                          {
+                            className: 'ais-custom-input',
+                            value: settings.customApi.search.provider,
+                            'aria-label': t('searchApiProvider'),
+                            onChange: function (event) {
+                              updateApiField('search', 'provider', event.target.value)
+                            },
+                          },
+                          ['tavily', 'bocha', 'searxng', 'serper'].map(function (option) {
+                            return h('option', { key: option, value: option }, option)
+                          }),
+                        ),
+                        h('input', {
+                          className: 'ais-custom-input ais-custom-input-url',
+                          type: 'text',
+                          value: settings.customApi.search.baseUrl,
+                          placeholder: t('searchApiBaseUrl'),
+                          'aria-label': t('searchApiBaseUrl'),
+                          onChange: function (event) {
+                            updateApiField('search', 'baseUrl', event.target.value)
+                          },
+                        }),
+                        h('input', {
+                          className: 'ais-custom-input',
+                          type: 'password',
+                          value: settings.customApi.search.apiKey,
+                          placeholder: t('searchApiKeyPlaceholder'),
+                          'aria-label': t('searchApiKey'),
+                          onChange: function (event) {
+                            updateApiField('search', 'apiKey', event.target.value)
+                          },
+                        }),
+                      ),
+                    )
+                  : null,
+                h(
+                  'div',
+                  { className: 'ais-pref-inline' },
+                  h(
+                    'div',
+                    { className: 'ais-pref-label-block' },
+                    h('div', { className: 'ais-pref-label' }, t('thinkingApiToggle')),
+                    h('p', { className: 'ais-pref-hint' }, t('thinkingApiToggleHint')),
+                  ),
+                  h('button', {
+                    type: 'button',
+                    role: 'switch',
+                    className: 'ais-switch',
+                    'aria-checked': settings.customApi.thinking.mode === 'custom' ? 'true' : 'false',
+                    'aria-label': t('thinkingApiToggle'),
+                    onClick: function () {
+                      updateApiField('thinking', 'mode', settings.customApi.thinking.mode === 'custom' ? 'harness' : 'custom')
+                    },
+                  }),
+                ),
+                settings.customApi.thinking.mode === 'custom'
+                  ? h(
+                      'div',
+                      null,
+                      h(
+                        'div',
+                        { className: 'ais-custom-form' },
+                        h('input', {
+                          className: 'ais-custom-input ais-custom-input-url',
+                          type: 'text',
+                          value: settings.customApi.thinking.baseUrl,
+                          placeholder: t('thinkingBaseUrl'),
+                          'aria-label': t('thinkingBaseUrl'),
+                          onChange: function (event) {
+                            updateApiField('thinking', 'baseUrl', event.target.value)
+                          },
+                        }),
+                        h('input', {
+                          className: 'ais-custom-input',
+                          type: 'password',
+                          value: settings.customApi.thinking.apiKey,
+                          placeholder: t('thinkingApiKey'),
+                          'aria-label': t('thinkingApiKey'),
+                          onChange: function (event) {
+                            updateApiField('thinking', 'apiKey', event.target.value)
+                          },
+                        }),
+                        h('input', {
+                          className: 'ais-custom-input',
+                          type: 'text',
+                          value: settings.customApi.thinking.model,
+                          placeholder: t('thinkingModelPlaceholder'),
+                          'aria-label': t('thinkingModel'),
+                          onChange: function (event) {
+                            updateApiField('thinking', 'model', event.target.value)
+                          },
+                        }),
+                        h(
+                          'select',
+                          {
+                            className: 'ais-custom-input',
+                            value: settings.customApi.thinking.reasoningEffort,
+                            'aria-label': t('thinkingEffort'),
+                            onChange: function (event) {
+                              updateApiField('thinking', 'reasoningEffort', event.target.value)
+                            },
+                          },
+                          [
+                            ['auto', 'thinkingEffortAuto'],
+                            ['low', 'thinkingEffortLow'],
+                            ['medium', 'thinkingEffortMedium'],
+                            ['high', 'thinkingEffortHigh'],
+                          ].map(function (entry) {
+                            return h('option', { key: entry[0], value: entry[0] }, t(entry[1]))
+                          }),
+                        ),
+                      ),
+                    )
+                  : null,
+                h(
+                  'div',
+                  { className: 'ais-pref-inline' },
+                  h(
+                    'button',
+                    { type: 'button', className: 'ais-pref-button', disabled: settings.apiSaving, onClick: saveCustomApi },
+                    t('customApiSave'),
+                  ),
+                  settings.apiMessage !== '' ? h('span', { className: 'ais-pref-hint' }, settings.apiMessage) : null,
+                ),
+                settings.apiError !== '' ? h('p', { className: 'ais-pref-hint ais-pref-status-error' }, settings.apiError) : null,
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
                 h('div', { className: 'ais-pref-label' }, t('historyLabel')),
                 h('p', { className: 'ais-pref-hint' }, t('historyHint')),
                 h(
@@ -3333,6 +3640,9 @@
           function panelLabel() {
             return (DICTS[pickLang(ctx.locale)] || zh).nav
           }
+
+          // 设置导航里的「AI 搜索」用放大镜图标（settings.section 契约不带 icon，只能打标记 + CSS 替换）。
+          var disposeSettingsNavIcon = registerSettingsNavIcon(panelLabel)
 
           function injectLocale() {
             return { locale: ctx.locale }
@@ -3504,6 +3814,7 @@
             if (typeof disposeBetterSidebar === 'function') disposeBetterSidebar()
             if (typeof disposeSidebarTabs === 'function') disposeSidebarTabs()
             if (typeof disposeSidebarBrowser === 'function') disposeSidebarBrowser()
+            if (typeof disposeSettingsNavIcon === 'function') disposeSettingsNavIcon()
             if (typeof disposeDict === 'function') disposeDict()
             if (styleElement.parentNode !== null) styleElement.parentNode.removeChild(styleElement)
           }

@@ -1,5 +1,41 @@
 # 更新日志 / Changelog
 
+## [1.4.4-beta.6] - 2026-10-30
+
+### 中文
+
+**新增**
+- 设置侧栏里的「AI 搜索」现在有自己的**放大镜图标**（`settings.section` 契约不带 icon，
+  用导航行标记 + CSS mask 适配，颜色自动跟随主题）
+- 设置新增「**自定义 API 和模型**」：
+  - **自定义搜索 API**：可切换 Tavily / 博查（Bocha）/ SearXNG / Serper，填接口地址与 API Key，
+    替换默认联网搜索（正文抓取仍用 Harness）
+  - **自定义思考模型**：OpenAI 兼容接口（Base URL + API Key + 模型名），用于摘要 / 评分 / 百科生成，
+    支持**思考强度**（跟随模型 / 低 / 中 / 高）
+  - 两者默认都使用 **Harness 自带服务**，只有打开对应开关才生效；保存前会校验必填项
+
+**测试**
+- 7 个自测套件全部通过；新增自定义 API 归一化/校验、四种搜索平台请求映射、
+  思考模型 stream 适配、服务层接入（自定义搜索 + 自定义模型）等断言
+
+### English
+
+**Added**
+- The "AI Search" settings nav row now shows its own **magnifier icon** (the `settings.section`
+  contract has no icon field, so it marks its row and swaps the glyph with a CSS mask; colors follow
+  the theme)
+- New **"Custom API & models"** settings:
+  - **Custom search API**: switch to Tavily / Bocha / SearXNG / Serper with a custom endpoint and key,
+    replacing the default web search (page fetching still uses Harness)
+  - **Custom thinking model**: any OpenAI-compatible endpoint (base URL + key + model) used for
+    summaries / scoring / encyclopedia, with **thinking effort** (model default / low / medium / high)
+  - Both stay on Harness services by default and only apply when their switch is on; required fields
+    are validated before saving
+
+**Testing**
+- All 7 test suites pass; added assertions for custom-API normalization/validation, request mapping
+  for all four search platforms, thinking-model stream adaptation, and service-level integration
+
 ## [1.4.4-beta.5] - 2026-10-30
 
 ### 中文
