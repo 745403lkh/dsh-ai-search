@@ -28,8 +28,137 @@
 
       /** 页面状态是否跨挂载保留（来自设置 preserveState，默认开）。 */
       var PRESERVE_STATE = true
-      /** 最近一次搜索页快照：面板卸载（切换对话/工作区）后仍然保留。 */
-      var LAST_SEARCH_STATE = null
+      /** 每个搜索页实例（左侧主面板 / 更好的侧边栏里的各个页签）最近一次快照。 */
+      var LAST_SEARCH_STATES = {}
+
+      // ------------------------------------------------------------------
+      // 更好的侧边栏（dsh-better-sidebar）适配
+      // ------------------------------------------------------------------
+      /** 自定义引擎网址模板里的搜索词占位符。 */
+      var ENGINE_TOKEN = '*#*#*#*'
+
+      /** 侧边栏内置搜索引擎：ai 走插件自己的三模式，其余直接跳转对应搜索引擎。 */
+      var ENGINES = [
+        { id: 'ai', label: 'engineAi' },
+        { id: 'baidu', label: 'engineBaidu', url: 'https://www.baidu.com/s?wd=' },
+        { id: 'bing', label: 'engineBing', url: 'https://www.bing.com/search?q=' },
+        { id: 'google', label: 'engineGoogle', url: 'https://www.google.com/search?q=' },
+        { id: 'sogou', label: 'engineSogou', url: 'https://www.sogou.com/web?query=' },
+      ]
+
+      /**
+       * 内置引擎图标（统一 24×24 单色 filled path）：
+       * Baidu / Google 取自 Simple Icons（CC0）的官方 logo 路径，Bing / Sogou 为同风格手绘近似。
+       */
+      var ENGINE_ICON_PATHS = {
+        baidu:
+          'M9.154 0C7.71 0 6.54 1.658 6.54 3.707c0 2.051 1.171 3.71 2.615 3.71 1.446 0 2.614-1.659 2.614-3.71C11.768 1.658 10.6 0 9.154 0zm7.025.594C14.86.58 13.347 2.589 13.2 3.927c-.187 1.745.25 3.487 2.179 3.735 1.933.25 3.175-1.806 3.422-3.364.252-1.555-.995-3.364-2.362-3.674a1.218 1.218 0 0 0-.261-.03zM3.582 5.535a2.811 2.811 0 0 0-.156.008c-2.118.19-2.428 3.24-2.428 3.24-.287 1.41.686 4.425 3.297 3.864 2.617-.561 2.262-3.68 2.183-4.362-.125-1.018-1.292-2.773-2.896-2.75zm16.534 1.753c-2.308 0-2.617 2.119-2.617 3.616 0 1.43.121 3.425 2.988 3.362 2.867-.063 2.553-3.238 2.553-3.988 0-.745-.62-2.99-2.924-2.99zm-8.264 2.478c-1.424.014-2.708.925-3.323 1.947-1.118 1.868-2.863 3.05-3.112 3.363-.25.309-3.61 2.116-2.864 5.42.746 3.301 3.365 3.237 3.365 3.237s1.93.19 4.171-.31c2.24-.495 4.17.123 4.17.123s5.233 1.748 6.665-1.616c1.43-3.364-.808-5.109-.808-5.109s-2.99-2.306-4.736-4.798c-1.072-1.665-2.348-2.268-3.528-2.257zm-2.234 3.84 1.542.024v8.197H7.758c-1.47-.291-2.055-1.292-2.13-1.462-.072-.173-.488-.976-.268-2.343.635-2.049 2.447-2.196 2.447-2.196h1.81zm3.964 2.39v3.881c.096.413.612.488.612.488h1.614v-4.343h1.689v5.782h-3.915c-1.517-.39-1.59-1.465-1.59-1.465v-4.317zm-5.458 1.147c-.66.197-.978.708-1.05.928-.076.22-.247.78-.1 1.269.294 1.095 1.248 1.144 1.248 1.144h1.37v-3.34z',
+        google:
+          'M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z',
+        bing: 'M5.2 2.6h3.9v18.8H5.2zm9.4 6.1a6.2 6.2 0 1 0 0 12.4 6.2 6.2 0 0 0 0-12.4zm0 3.4a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6z',
+        sogou:
+          'M12.2 3.1c-4.7 0-7.7 2.5-7.7 6 0 3.2 2.5 5.1 6.4 6 3.1.7 4.2 1.6 4.2 2.9 0 1.5-1.6 2.5-3.9 2.5-2.6 0-5-1.2-6.6-3.2l-2.4 2.6c2 2.6 5.4 4 8.9 4 4.5 0 7.5-2.5 7.5-6.1 0-3.2-2.3-5-6.1-5.9-2.9-.7-4-1.6-4-2.8 0-1.3 1.3-2.2 3.4-2.2 2.1 0 4.1 1 5.4 2.5l2.3-2.5c-1.9-2.2-4.2-2.9-6.9-2.9z',
+      }
+      /** 手绘路径需要 evenodd 才能挖出镂空（Bing 的字母 b 内环）。 */
+      var ENGINE_ICON_FILL_RULES = { bing: 'evenodd' }
+
+      /** 用户自定义搜索引擎（与设置同步；侧栏引擎栏订阅其变化）。 */
+      var CUSTOM_ENGINES = []
+      var CUSTOM_ENGINE_LISTENERS = []
+
+      /** 更新自定义引擎列表并通知订阅者（设置页保存后立即反映到引擎栏）。 */
+      function setCustomEngines(list) {
+        CUSTOM_ENGINES = Array.isArray(list) ? list.slice() : []
+        for (var index = 0; index < CUSTOM_ENGINE_LISTENERS.length; index += 1) {
+          try {
+            CUSTOM_ENGINE_LISTENERS[index]()
+          } catch (notifyError) {
+            /* 订阅方异常不影响保存 */
+          }
+        }
+      }
+
+      /** 订阅自定义引擎列表变化；返回取消订阅函数。 */
+      function subscribeCustomEngines(fn) {
+        CUSTOM_ENGINE_LISTENERS.push(fn)
+        return function () {
+          var at = CUSTOM_ENGINE_LISTENERS.indexOf(fn)
+          if (at !== -1) CUSTOM_ENGINE_LISTENERS.splice(at, 1)
+        }
+      }
+
+      /** 是否启用更好的侧边栏适配（来自设置 betterSidebar）。 */
+      var ADAPT = true
+      /** 结果链接是否默认在侧边栏浏览器打开（来自设置 openLinksInSidebar）。 */
+      var OPEN_IN_SIDEBAR = true
+      /** 默认搜索引擎（来自设置 defaultEngine）。 */
+      var DEFAULT_ENGINE = 'ai'
+      /** 是否检测到 dsh-better-sidebar（仅用于设置页提示）。 */
+      var HAS_BETTER_SIDEBAR = false
+      /** 由宿主 sidebarRight 服务提供的打开函数（在侧边栏浏览器里打开 URL）。 */
+      var openInSidebarBrowser = null
+      /** 原生右侧栏页签的注册/注销开关（设置变化时重新同步；由 apply 注入）。 */
+      var NATIVE_SYNC = null
+
+      /** 按 id 取搜索引擎定义（内置或自定义）。 */
+      function engineOf(id) {
+        for (var index = 0; index < ENGINES.length; index += 1) {
+          if (ENGINES[index].id === id) return ENGINES[index]
+        }
+        if (typeof id === 'string' && id.indexOf('custom:') === 0) {
+          var customId = id.slice('custom:'.length)
+          for (var at = 0; at < CUSTOM_ENGINES.length; at += 1) {
+            var custom = CUSTOM_ENGINES[at]
+            if (custom.id === customId) {
+              return { id: 'custom:' + custom.id, label: custom.name, custom: true, url: custom.urlTemplate }
+            }
+          }
+        }
+        return ENGINES[0]
+      }
+
+      /** 把搜索词套进引擎的网址（内置引擎直接拼接，自定义引擎替换占位符）。 */
+      function engineSearchUrl(engine, query) {
+        if (engine === null || engine === undefined || typeof engine.url !== 'string') return ''
+        var encoded = encodeURIComponent(query)
+        if (engine.custom === true) return engine.url.split(ENGINE_TOKEN).join(encoded)
+        return engine.url + encoded
+      }
+
+      /** 用系统默认浏览器打开（兜底）。 */
+      function openExternal(url) {
+        try {
+          window.open(url, '_blank', 'noopener,noreferrer')
+        } catch (openError) {
+          /* 被拦截时静默失败 */
+        }
+      }
+
+      /** 按设置打开 URL：优先侧边栏浏览器，否则系统浏览器。 */
+      function openUrl(url) {
+        if (typeof url !== 'string' || url === '') return
+        if (ADAPT === true && OPEN_IN_SIDEBAR === true && typeof openInSidebarBrowser === 'function') {
+          try {
+            openInSidebarBrowser(url)
+            return
+          } catch (openError) {
+            /* 侧边栏浏览器不可用时退回外部浏览器 */
+          }
+        }
+        openExternal(url)
+      }
+
+      /** 结果链接的公共属性：适配开启时接管点击，改在侧边栏浏览器打开。 */
+      function linkProps(className, url, title) {
+        var props = { className: className, href: url, target: '_blank', rel: 'noreferrer noopener', title: title }
+        if (ADAPT === true && OPEN_IN_SIDEBAR === true) {
+          props.onClick = function (event) {
+            if (event && typeof event.preventDefault === 'function') event.preventDefault()
+            openUrl(url)
+          }
+        }
+        return props
+      }
 
       // ------------------------------------------------------------------
       // 文案字典（跟随宿主 locale；注册到 ctx.locale）
@@ -137,6 +266,30 @@
         loadFailed: '读取设置失败，已使用默认值',
         loadingSettings: '正在读取设置…',
         navIconNote: '设置导航图标由 Harness 外壳统一提供。',
+        engineRailLabel: '搜索引擎',
+        engineAi: 'AI 搜索',
+        engineBaidu: '百度',
+        engineBing: '必应',
+        engineGoogle: 'Google',
+        engineSogou: '搜狗',
+        engineCustomHint: '自定义',
+        customEngineSection: '自定义搜索引擎',
+        customEngineHint: '名称 + 搜索网址模板，用 *#*#*#* 代替搜索词，可添加多个。',
+        customEngineNamePlaceholder: '名称，例如 知乎',
+        customEngineUrlPlaceholder: 'https://example.com/search?q=*#*#*#*',
+        customEngineAdd: '添加',
+        customEngineEmpty: '还没有自定义搜索引擎',
+        customEngineDelete: '删除',
+        customEngineInvalid: '请填写名称，并在网址中用 *#*#*#* 代替搜索词',
+        betterSidebarTabTitle: 'AI 搜索',
+        betterSidebarTabDesc: '搜索网页并整理结果',
+        betterSidebarLabel: '适配更好的侧边栏',
+        betterSidebarHint: '在 dsh-better-sidebar 中注册「AI 搜索」页签；未安装该插件时自动忽略。',
+        betterSidebarMissing: '未检测到 dsh-better-sidebar（安装后自动生效）',
+        openLinksLabel: '结果链接默认在侧边栏浏览器打开',
+        openLinksHint: '关闭后，点击结果改用系统默认浏览器打开。',
+        defaultEngineLabel: '默认搜索引擎',
+        defaultEngineHint: '侧边栏页面左侧可随时切换；选择非 AI 引擎时三模式切换会隐藏。',
       }
       var en = {
         nav: 'AI Search',
@@ -241,6 +394,30 @@
         loadFailed: 'Could not load settings; defaults are shown',
         loadingSettings: 'Loading settings…',
         navIconNote: 'The settings navigation icon is provided by the Harness shell.',
+        engineRailLabel: 'Search engine',
+        engineAi: 'AI Search',
+        engineBaidu: 'Baidu',
+        engineBing: 'Bing',
+        engineGoogle: 'Google',
+        engineSogou: 'Sogou',
+        engineCustomHint: 'Custom',
+        customEngineSection: 'Custom search engines',
+        customEngineHint: 'Name + URL template with *#*#*#* as the query placeholder; add as many as you like.',
+        customEngineNamePlaceholder: 'Name, e.g. Zhihu',
+        customEngineUrlPlaceholder: 'https://example.com/search?q=*#*#*#*',
+        customEngineAdd: 'Add',
+        customEngineEmpty: 'No custom search engines yet',
+        customEngineDelete: 'Delete',
+        customEngineInvalid: 'Enter a name and use *#*#*#* in the URL as the query placeholder',
+        betterSidebarTabTitle: 'AI Search',
+        betterSidebarTabDesc: 'Search the web with AI curation',
+        betterSidebarLabel: 'Better Sidebar integration',
+        betterSidebarHint: 'Registers an AI Search tab inside dsh-better-sidebar; ignored when that plugin is absent.',
+        betterSidebarMissing: 'dsh-better-sidebar not detected (takes effect once installed)',
+        openLinksLabel: 'Open result links in the sidebar browser',
+        openLinksHint: 'Turn off to open results with the system browser instead.',
+        defaultEngineLabel: 'Default search engine',
+        defaultEngineHint: 'Switchable from the rail inside the sidebar page; non-AI engines hide the three mode tabs.',
       }
       var DICTS = { zh: zh, en: en }
       var SUGGESTIONS = {
@@ -456,6 +633,23 @@
         '.ais-pref-status-ok{color:var(--dsw-alias-state-success-primary)}',
         '.ais-pref-status-error{color:var(--dsw-alias-state-error-primary)}',
         '.ais-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}',
+        '.ais-embed{display:flex;height:100%;min-height:0;width:100%;background:var(--dsw-alias-bg-base)}',
+        '.ais-embed-body{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;overflow:hidden}',
+        '.ais-rail{flex:none;width:76px;display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:10px 8px;border-right:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);overflow-y:auto}',
+        '.ais-rail-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--dsw-alias-label-secondary);cursor:pointer;font:inherit;font-size:11px;line-height:1.2}',
+        '.ais-rail-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}',
+        '.ais-rail-btn.is-active{background:var(--dsw-alias-bg-layer-1);border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-brand-primary)}',
+        '.ais-rail-icon{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:var(--dsw-alias-bg-layer-2);font-size:11px;font-weight:600}',
+        '.ais-rail-label{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+        '.ais-rail-letter{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;letter-spacing:-.3px}',
+        '.ais-custom-list{display:flex;flex-direction:column;gap:6px}',
+        '.ais-custom-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);min-width:0}',
+        '.ais-custom-name{flex:none;font-size:12px;line-height:18px;font-weight:600}',
+        '.ais-custom-url{flex:1;min-width:0;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+        '.ais-custom-form{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}',
+        '.ais-custom-input{box-sizing:border-box;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:18px;min-width:110px;flex:1 1 130px}',
+        '.ais-custom-input-url{flex:2 1 240px}',
+        '.ais-custom-input:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}',
       ].join('\n')
 
       // ------------------------------------------------------------------
@@ -879,7 +1073,7 @@
                       entry.url
                         ? h(
                             'a',
-                            { className: 'ais-row-strike', href: entry.url, target: '_blank', rel: 'noreferrer noopener', title: entry.url },
+                            linkProps('ais-row-strike', entry.url, entry.url),
                             entry.title || entry.url,
                           )
                         : h('span', { className: 'ais-row-strike' }, entry.title || '(无标题)'),
@@ -922,7 +1116,7 @@
                       { className: 'ais-row-main' },
                       h(
                         'a',
-                        { className: 'ais-row-title', href: source.url, target: '_blank', rel: 'noreferrer noopener', title: source.url },
+                        linkProps('ais-row-title', source.url, source.url),
                         source.title || source.url,
                       ),
                       h('span', { className: 'ais-row-muted' }, source.domain + (source.publishedAt ? ' · ' + source.publishedAt : '')),
@@ -1014,7 +1208,7 @@
             h(
               'div',
               { className: 'ais-pick-top' },
-              h('a', { className: 'ais-pick-title', href: pick.url, target: '_blank', rel: 'noreferrer noopener', title: pick.url }, pick.title),
+              h('a', linkProps('ais-pick-title', pick.url, pick.url), pick.title),
               h('span', { className: 'ais-domain', title: pick.url }, pick.domain),
               pick.trusted ? h('span', { className: 'ais-trusted' }, t('trusted')) : null,
               typeof pick.score === 'number' ? h('span', { className: 'ais-pick-score' }, format(t('score'), { n: pick.score })) : null,
@@ -1179,7 +1373,7 @@
             h(
               'div',
               { className: 'ais-feed-top' },
-              h('a', { className: 'ais-feed-title', href: item.url, target: '_blank', rel: 'noreferrer noopener', title: item.url }, item.title),
+              h('a', linkProps('ais-feed-title', item.url, item.url), item.title),
               h('span', { className: 'ais-kind' }, item.kind === 'video' && item.sourcePlatform ? t(kindKey) + ' · ' + item.sourcePlatform : t(kindKey)),
               h('span', { className: 'ais-domain', title: item.url }, item.domain),
             ),
@@ -1199,7 +1393,7 @@
         var item = props.item
         return h(
           'a',
-          { className: 'ais-image-card', href: item.url, target: '_blank', rel: 'noreferrer noopener', title: item.url },
+          linkProps('ais-image-card', item.url, item.url),
           h('div', { className: 'ais-image-box' }, item.thumbnail ? h('img', { src: item.thumbnail, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' }) : h(ImageGlyph, { size: 22 })),
           h(
             'div',
@@ -1401,12 +1595,103 @@
         return [...seen]
       }
 
+      /** 统一的引擎图标：内置用 24×24 单色路径，自定义引擎用首字母方块。 */
+      function EngineGlyph(props) {
+        var id = props && props.id
+        var size = (props && props.size) || 18
+        if (id === 'ai') return h(SearchGlyph, { size: size })
+        var path = ENGINE_ICON_PATHS[id]
+        if (path !== undefined) {
+          return h(
+            'svg',
+            {
+              width: size,
+              height: size,
+              viewBox: '0 0 24 24',
+              fill: 'currentColor',
+              fillRule: ENGINE_ICON_FILL_RULES[id] || 'nonzero',
+              'aria-hidden': 'true',
+              focusable: 'false',
+            },
+            h('path', { d: path }),
+          )
+        }
+        var letter = props && props.letter ? String(props.letter) : '?'
+        return h('span', { className: 'ais-rail-letter' }, letter.slice(0, 2))
+      }
+
+      /** 侧边栏左侧的搜索引擎竖排按钮（只在更好的侧边栏页签里显示）。 */
+      function EngineRail(props) {
+        var t = props.t
+        var engine = props.engine
+        var bumpState = React.useState(0)
+        var bump = bumpState[1]
+        React.useEffect(function () {
+          return subscribeCustomEngines(function () {
+            bump(function (value) {
+              return value + 1
+            })
+          })
+        }, [])
+        var entries = []
+        for (var index = 0; index < ENGINES.length; index += 1) {
+          entries.push({ id: ENGINES[index].id, label: t(ENGINES[index].label) })
+        }
+        for (var at = 0; at < CUSTOM_ENGINES.length; at += 1) {
+          entries.push({ id: 'custom:' + CUSTOM_ENGINES[at].id, label: CUSTOM_ENGINES[at].name, custom: true })
+        }
+        return h(
+          'nav',
+          { className: 'ais-rail', 'aria-label': t('engineRailLabel') },
+          entries.map(function (entry) {
+            var active = engine === entry.id
+            return h(
+              'button',
+              {
+                key: entry.id,
+                type: 'button',
+                className: 'ais-rail-btn' + (active ? ' is-active' : ''),
+                'aria-pressed': active ? 'true' : 'false',
+                title: entry.label,
+                onClick: function () {
+                  props.onChange(entry.id)
+                },
+              },
+              h('span', { className: 'ais-rail-icon' }, h(EngineGlyph, { id: entry.custom === true ? entry.id : entry.id, size: 18, letter: entry.label })),
+              h('span', { className: 'ais-rail-label' }, entry.label),
+            )
+          }),
+        )
+      }
+
+      /** 宿主右侧栏页签的实体：把该页签的唯一 id 交给搜索页，多开时互不干扰。 */
+      function NativeAiSearchBody(props) {
+        var info = null
+        try {
+          info = props !== undefined && props !== null && typeof props.useTabInfo === 'function' ? props.useTabInfo() : null
+        } catch (hookError) {
+          info = null
+        }
+        var tabId =
+          info !== null && info !== undefined && info.tab !== undefined && info.tab !== null && typeof info.tab.id === 'string' ? info.tab.id : NS
+        return h(SearchPage, { embedded: true, instanceId: 'native:' + tabId })
+      }
+
+      /** 原生页签的 guide 图标（宿主以函数形式渲染）。 */
+      function NativeGuideIcon(props) {
+        return h(SearchGlyph, { size: (props && props.size) || 16 })
+      }
+
       function SearchPage(props) {
         var locale = props && props.locale
+        var embedded = props !== undefined && props !== null && props.embedded === true
+        /** 页面实例标识：主面板固定 'main'，更好的侧边栏里每个页签用 tab.id（互不干扰）。 */
+        var instanceId =
+          props !== undefined && props !== null && typeof props.instanceId === 'string' && props.instanceId !== '' ? props.instanceId : 'main'
         var localized = useLocale(locale)
         var t = localized.t
         var lang = localized.lang
-        var restore = PRESERVE_STATE === true && LAST_SEARCH_STATE !== null ? LAST_SEARCH_STATE : null
+        var restore = PRESERVE_STATE === true && LAST_SEARCH_STATES[instanceId] !== undefined ? LAST_SEARCH_STATES[instanceId] : null
         var draftState = React.useState(restore === null ? '' : restore.draft || '')
         var draft = draftState[0]
         var setDraft = draftState[1]
@@ -1446,6 +1731,10 @@
         var nextErrorState = React.useState('')
         var nextError = nextErrorState[0]
         var setNextError = nextErrorState[1]
+        var engineState = React.useState(embedded ? DEFAULT_ENGINE : 'ai')
+        var engine = engineState[0]
+        var setEngine = engineState[1]
+        var showModes = engine === 'ai'
         var requestRef = React.useRef(null)
         var timerRef = React.useRef(null)
         var mountedRef = React.useRef(true)
@@ -1475,13 +1764,13 @@
         React.useEffect(
           function () {
             if (PRESERVE_STATE !== true) {
-              LAST_SEARCH_STATE = null
+              LAST_SEARCH_STATES = {}
               return
             }
             if (status === 'loading') return
-            LAST_SEARCH_STATE = { draft: draft, mode: mode, status: status, result: result, error: error, board: board }
+            LAST_SEARCH_STATES[instanceId] = { draft: draft, mode: mode, status: status, result: result, error: error, board: board }
           },
-          [draft, mode, status, result, error, board],
+          [draft, mode, status, result, error, board, instanceId],
         )
 
         var clearTimer = React.useCallback(function () {
@@ -1610,19 +1899,56 @@
           [abortCurrent],
         )
 
+        var changeEngine = React.useCallback(function (next) {
+          if (engineOf(next).id === engine) return
+          setEngine(next)
+          DEFAULT_ENGINE = next
+          requestJson('/settings', { method: 'POST', body: { defaultEngine: next } }).catch(function () {
+            /* 持久化失败不影响当前切换 */
+          })
+        }, [engine])
+
         var onSubmit = React.useCallback(
           function () {
+            var current = engineOf(engine)
+            if (current.id !== 'ai') {
+              var query = String(draft === undefined ? '' : draft).trim()
+              if (query === '') {
+                setError(t('emptyQuery'))
+                setStatus('error')
+                return
+              }
+              setDraft(query)
+              openUrl(engineSearchUrl(current, query))
+              return
+            }
             runSearch(draft, mode)
           },
-          [runSearch, draft, mode],
+          [runSearch, draft, mode, engine, t],
         )
+
+        /** 嵌入更好的侧边栏时，页面外面包一层竖向搜索引擎栏。 */
+        function withRail(core) {
+          if (!embedded) return core
+          return h(
+            'div',
+            { className: 'ais-embed' },
+            h(EngineRail, { t: t, engine: engine, onChange: changeEngine }),
+            h('div', { className: 'ais-embed-body' }, core),
+          )
+        }
 
         var onChip = React.useCallback(
           function (item) {
             setDraft(item)
+            var current = engineOf(engine)
+            if (current.id !== 'ai') {
+              openUrl(engineSearchUrl(current, item))
+              return
+            }
             runSearch(item, mode)
           },
-          [runSearch, mode],
+          [runSearch, mode, engine],
         )
 
         var onModeChange = React.useCallback(
@@ -1683,46 +2009,48 @@
         var suggestions = SUGGESTIONS[lang] || SUGGESTIONS.zh
         var loading = status === 'loading'
         var searchBar = h(SearchBar, { t: t, value: draft, loading: loading, onChange: setDraft, onSubmit: onSubmit, onCancel: cancelSearch })
-        var modeTabs = h(ModeTabs, { t: t, mode: mode, onChange: onModeChange })
+        var modeTabs = showModes ? h(ModeTabs, { t: t, mode: mode, onChange: onModeChange }) : null
 
         if (status === 'idle') {
-          return h(
-            'div',
-            { className: 'ais-page' },
+          return withRail(
             h(
               'div',
-              { className: 'ais-hero' },
-              h('div', { className: 'ais-hero-logo' }, h(SearchGlyph, { size: 28 })),
-              h('h1', { className: 'ais-hero-title' }, t('title')),
-              modeTabs,
-              h('div', { className: 'ais-hero-search' }, searchBar),
-              historyItems.length > 0
-                ? h(
-                    'div',
-                    { className: 'ais-hero-history' },
-                    h('span', { className: 'ais-history-label' }, t('historyTitle')),
-                    h(
+              { className: 'ais-page' },
+              h(
+                'div',
+                { className: 'ais-hero' },
+                h('div', { className: 'ais-hero-logo' }, h(SearchGlyph, { size: 28 })),
+                h('h1', { className: 'ais-hero-title' }, t('title')),
+                modeTabs,
+                h('div', { className: 'ais-hero-search' }, searchBar),
+                historyItems.length > 0
+                  ? h(
                       'div',
-                      { className: 'ais-hero-chips' },
-                      historyItems.slice(0, 6).map(function (entry) {
-                        return h(
-                          'button',
-                          {
-                            key: entry.query,
-                            type: 'button',
-                            className: 'ais-chip',
-                            title: entry.at ? entry.query + ' · ' + htmlTime(entry.at) : entry.query,
-                            onClick: function () {
-                              onChip(entry.query)
+                      { className: 'ais-hero-history' },
+                      h('span', { className: 'ais-history-label' }, t('historyTitle')),
+                      h(
+                        'div',
+                        { className: 'ais-hero-chips' },
+                        historyItems.slice(0, 6).map(function (entry) {
+                          return h(
+                            'button',
+                            {
+                              key: entry.query,
+                              type: 'button',
+                              className: 'ais-chip',
+                              title: entry.at ? entry.query + ' · ' + htmlTime(entry.at) : entry.query,
+                              onClick: function () {
+                                onChip(entry.query)
+                              },
                             },
-                          },
-                          entry.query,
-                        )
-                      }),
-                    ),
-                    h('button', { type: 'button', className: 'ais-history-clear', onClick: clearHistory }, t('historyClear')),
-                  )
-                : h('div', { className: 'ais-hero-chips' }, h(SuggestionList, { t: t, items: suggestions, onPick: onChip })),
+                            entry.query,
+                          )
+                        }),
+                      ),
+                      h('button', { type: 'button', className: 'ais-history-clear', onClick: clearHistory }, t('historyClear')),
+                    )
+                  : h('div', { className: 'ais-hero-chips' }, h(SuggestionList, { t: t, items: suggestions, onPick: onChip })),
+              ),
             ),
           )
         }
@@ -1788,22 +2116,24 @@
           }
         }
 
-        return h(
-          'div',
-          { className: 'ais-page' },
+        return withRail(
           h(
             'div',
-            { className: 'ais-inner' },
+            { className: 'ais-page' },
             h(
-              'header',
-              { className: 'ais-head' },
-              h('div', { className: 'ais-logo' }, h(SearchGlyph, { size: 17 })),
-              h('h1', { className: 'ais-title' }, t('title')),
-              h('button', { type: 'button', className: 'ais-ghost ais-head-action', onClick: newSearch }, t('newSearch')),
+              'div',
+              { className: 'ais-inner' },
+              h(
+                'header',
+                { className: 'ais-head' },
+                h('div', { className: 'ais-logo' }, h(SearchGlyph, { size: 17 })),
+                h('h1', { className: 'ais-title' }, t('title')),
+                h('button', { type: 'button', className: 'ais-ghost ais-head-action', onClick: newSearch }, t('newSearch')),
+              ),
+              showModes ? h('div', { className: 'ais-mode-bar' }, modeTabs) : null,
+              searchBar,
+              content,
             ),
-            h('div', { className: 'ais-mode-bar' }, modeTabs),
-            searchBar,
-            content,
           ),
         )
       }
@@ -1831,6 +2161,13 @@
           encyclopediaDetail: 'standard',
           browseWeights: { relevance: 40, timeliness: 30, heat: 30 },
           preserveState: true,
+          betterSidebar: true,
+          openLinksInSidebar: true,
+          defaultEngine: 'ai',
+          customEngines: [],
+          customName: '',
+          customUrl: '',
+          customError: '',
           saving: false,
           saved: false,
           error: '',
@@ -1853,6 +2190,10 @@
               var next = payload.settings || {}
               loadedRef.current = true
               PRESERVE_STATE = next.preserveState !== false
+              ADAPT = next.betterSidebar !== false
+              OPEN_IN_SIDEBAR = next.openLinksInSidebar !== false
+              DEFAULT_ENGINE = next.defaultEngine || 'ai'
+              setCustomEngines(Array.isArray(next.customEngines) ? next.customEngines : [])
               setSettings(function (previous) {
                 return {
                   ...previous,
@@ -1861,6 +2202,10 @@
                   encyclopediaDetail: next.encyclopediaDetail || 'standard',
                   browseWeights: next.browseWeights || previous.browseWeights,
                   preserveState: next.preserveState !== false,
+                  betterSidebar: next.betterSidebar !== false,
+                  openLinksInSidebar: next.openLinksInSidebar !== false,
+                  defaultEngine: next.defaultEngine || 'ai',
+                  customEngines: Array.isArray(next.customEngines) ? next.customEngines : [],
                 }
               })
             })
@@ -1893,18 +2238,29 @@
           setSettings(function (previous) {
             return { ...previous, saving: true, saved: false, error: '' }
           })
-          requestJson('/settings', { method: 'POST', body: patch })
-            .then(function () {
-              if (!aliveRef.current || saveSeqRef.current !== seq) return
+          return requestJson('/settings', { method: 'POST', body: patch })
+            .then(function (payload) {
+              if (!aliveRef.current || saveSeqRef.current !== seq) return null
+              if (payload && payload.settings) {
+                DEFAULT_ENGINE = payload.settings.defaultEngine || DEFAULT_ENGINE
+                setCustomEngines(Array.isArray(payload.settings.customEngines) ? payload.settings.customEngines : [])
+              }
               setSettings(function (previous) {
-                return { ...previous, saving: false, saved: true }
+                var next = { ...previous, saving: false, saved: true }
+                if (payload && payload.settings) {
+                  next.defaultEngine = payload.settings.defaultEngine || previous.defaultEngine
+                  next.customEngines = Array.isArray(payload.settings.customEngines) ? payload.settings.customEngines : previous.customEngines
+                }
+                return next
               })
+              return payload
             })
             .catch(function (failure) {
-              if (!aliveRef.current || saveSeqRef.current !== seq) return
+              if (!aliveRef.current || saveSeqRef.current !== seq) return null
               setSettings(function (previous) {
                 return { ...previous, saving: false, error: failure && failure.message ? failure.message : String(failure) }
               })
+              return null
             })
         }, [])
 
@@ -1944,10 +2300,82 @@
               return { ...previous, preserveState: next }
             })
             PRESERVE_STATE = next
-            if (next === false) LAST_SEARCH_STATE = null
+            if (next === false) LAST_SEARCH_STATES = {}
             save({ preserveState: next })
           },
           [save],
+        )
+
+        var chooseBetterSidebar = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, betterSidebar: next }
+            })
+            ADAPT = next
+            if (typeof NATIVE_SYNC === 'function') NATIVE_SYNC()
+            save({ betterSidebar: next })
+          },
+          [save],
+        )
+
+        var chooseOpenLinks = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, openLinksInSidebar: next }
+            })
+            OPEN_IN_SIDEBAR = next
+            save({ openLinksInSidebar: next })
+          },
+          [save],
+        )
+
+        var chooseEngine = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, defaultEngine: next }
+            })
+            DEFAULT_ENGINE = next
+            save({ defaultEngine: next })
+          },
+          [save],
+        )
+
+        var addCustomEngine = React.useCallback(
+          function () {
+            var name = String(settings.customName || '').trim()
+            var urlTemplate = String(settings.customUrl || '').trim()
+            if (name === '' || urlTemplate.length < 12 || !/^https?:\/\//i.test(urlTemplate) || urlTemplate.indexOf(ENGINE_TOKEN) === -1) {
+              setSettings(function (previous) {
+                return { ...previous, customError: t('customEngineInvalid') }
+              })
+              return
+            }
+            var nextList = (settings.customEngines || []).concat([{ name: name, urlTemplate: urlTemplate }])
+            setSettings(function (previous) {
+              return { ...previous, customEngines: nextList, customName: '', customUrl: '', customError: '' }
+            })
+            setCustomEngines(nextList)
+            save({ customEngines: nextList })
+          },
+          [settings.customEngines, settings.customName, settings.customUrl, save, t],
+        )
+
+        var removeCustomEngine = React.useCallback(
+          function (engineId) {
+            var nextList = (settings.customEngines || []).filter(function (entry) {
+              return entry.id !== engineId
+            })
+            var patch = { customEngines: nextList }
+            if (settings.defaultEngine === 'custom:' + engineId) patch.defaultEngine = 'ai'
+            setSettings(function (previous) {
+              var next = { ...previous, customEngines: nextList }
+              if (next.defaultEngine === 'custom:' + engineId) next.defaultEngine = 'ai'
+              return next
+            })
+            setCustomEngines(nextList)
+            save(patch)
+          },
+          [settings.customEngines, settings.defaultEngine, save],
         )
 
         React.useEffect(
@@ -2139,6 +2567,137 @@
               h(
                 'div',
                 { className: 'ais-pref-group' },
+                h(
+                  'div',
+                  { className: 'ais-pref-inline' },
+                  h(
+                    'div',
+                    { className: 'ais-pref-label-block' },
+                    h('div', { className: 'ais-pref-label' }, t('betterSidebarLabel')),
+                    h('p', { className: 'ais-pref-hint' }, t('betterSidebarHint')),
+                    HAS_BETTER_SIDEBAR ? null : h('p', { className: 'ais-pref-hint' }, t('betterSidebarMissing')),
+                  ),
+                  h('button', {
+                    type: 'button',
+                    role: 'switch',
+                    className: 'ais-switch',
+                    'aria-checked': settings.betterSidebar ? 'true' : 'false',
+                    'aria-label': t('betterSidebarLabel'),
+                    onClick: function () {
+                      chooseBetterSidebar(!settings.betterSidebar)
+                    },
+                  }),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
+                h(
+                  'div',
+                  { className: 'ais-pref-inline' },
+                  h(
+                    'div',
+                    { className: 'ais-pref-label-block' },
+                    h('div', { className: 'ais-pref-label' }, t('openLinksLabel')),
+                    h('p', { className: 'ais-pref-hint' }, t('openLinksHint')),
+                  ),
+                  h('button', {
+                    type: 'button',
+                    role: 'switch',
+                    className: 'ais-switch',
+                    'aria-checked': settings.openLinksInSidebar ? 'true' : 'false',
+                    'aria-label': t('openLinksLabel'),
+                    onClick: function () {
+                      chooseOpenLinks(!settings.openLinksInSidebar)
+                    },
+                  }),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
+                h('div', { className: 'ais-pref-label' }, t('defaultEngineLabel')),
+                h('p', { className: 'ais-pref-hint' }, t('defaultEngineHint')),
+                h(
+                  'div',
+                  { className: 'ais-seg', role: 'group' },
+                  ENGINES.map(function (entry) {
+                    return h(
+                      'button',
+                      {
+                        key: entry.id,
+                        type: 'button',
+                        className: 'ais-seg-btn',
+                        'aria-pressed': settings.defaultEngine === entry.id ? 'true' : 'false',
+                        onClick: function () {
+                          chooseEngine(entry.id)
+                        },
+                      },
+                      t(entry.label),
+                    )
+                  }),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
+                h('div', { className: 'ais-pref-label' }, t('customEngineSection')),
+                h('p', { className: 'ais-pref-hint' }, t('customEngineHint')),
+                (settings.customEngines || []).length === 0
+                  ? h('p', { className: 'ais-pref-hint' }, t('customEngineEmpty'))
+                  : h(
+                      'div',
+                      { className: 'ais-custom-list' },
+                      (settings.customEngines || []).map(function (engine) {
+                        return h(
+                          'div',
+                          { className: 'ais-custom-row', key: engine.id || engine.name },
+                          h('span', { className: 'ais-custom-name' }, engine.name),
+                          h('span', { className: 'ais-custom-url', title: engine.urlTemplate }, engine.urlTemplate),
+                          h(
+                            'button',
+                            { type: 'button', className: 'ais-pref-button', onClick: function () { removeCustomEngine(engine.id) } },
+                            t('customEngineDelete'),
+                          ),
+                        )
+                      }),
+                    ),
+                h(
+                  'div',
+                  { className: 'ais-custom-form' },
+                  h('input', {
+                    className: 'ais-custom-input',
+                    type: 'text',
+                    value: settings.customName,
+                    placeholder: t('customEngineNamePlaceholder'),
+                    'aria-label': t('customEngineNamePlaceholder'),
+                    onChange: function (event) {
+                      var value = event.target.value
+                      setSettings(function (previous) {
+                        return { ...previous, customName: value }
+                      })
+                    },
+                  }),
+                  h('input', {
+                    className: 'ais-custom-input ais-custom-input-url',
+                    type: 'text',
+                    value: settings.customUrl,
+                    placeholder: t('customEngineUrlPlaceholder'),
+                    'aria-label': t('customEngineUrlPlaceholder'),
+                    onChange: function (event) {
+                      var value = event.target.value
+                      setSettings(function (previous) {
+                        return { ...previous, customUrl: value }
+                      })
+                    },
+                  }),
+                  h('button', { type: 'button', className: 'ais-pref-button', onClick: addCustomEngine }, t('customEngineAdd')),
+                ),
+                settings.customError !== '' ? h('p', { className: 'ais-pref-hint ais-pref-status-error' }, settings.customError) : null,
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
                 h('div', { className: 'ais-pref-label' }, t('historyLabel')),
                 h('p', { className: 'ais-pref-hint' }, t('historyHint')),
                 h(
@@ -2180,6 +2739,111 @@
             return { locale: ctx.locale }
           }
 
+          function dictLabel(key) {
+            return (DICTS[pickLang(ctx.locale)] || zh)[key] || key
+          }
+
+          /** 安全地订阅一个可选客户端服务：服务不存在或上下文不支持时静默跳过。 */
+          function safeInject(services, callback) {
+            try {
+              if (typeof ctx.inject !== 'function') return null
+              return ctx.inject(services, callback)
+            } catch (error) {
+              return null
+            }
+          }
+
+          // 更好的侧边栏适配：直接在宿主右侧栏注册「AI 搜索」页签类型（multiple=true，可像浏览器一样多开）。
+          // 页签实体由 NativeAiSearchBody 渲染；未安装 dsh-better-sidebar 时保持原形态。
+          var nativeSeat = null
+          var disposeSidebarTabs = safeInject(['sidebarRightTabs'], function (injected) {
+            var tabs = injected.get('sidebarRightTabs')
+            if (tabs === undefined || tabs === null || typeof tabs.register !== 'function') return
+            function registerSeat() {
+              var disposers = []
+              try {
+                disposers.push(
+                  tabs.register({
+                    id: NS + ':native',
+                    kind: NS,
+                    multiple: true,
+                    keepMounted: true,
+                    title: function () {
+                      return dictLabel('betterSidebarTabTitle')
+                    },
+                    guide: [
+                      {
+                        id: NS,
+                        order: 15,
+                        title: function () {
+                          return dictLabel('betterSidebarTabTitle')
+                        },
+                        description: function () {
+                          return dictLabel('betterSidebarTabDesc')
+                        },
+                        icon: NativeGuideIcon,
+                      },
+                    ],
+                  }),
+                )
+                disposers.push(
+                  ctx.slots.inject('sidebar.right.pane.tab', function () {
+                    return ctx.slots.register({ name: 'sidebar.right.pane.tab', key: NS + ':native' }, NativeAiSearchBody)
+                  }),
+                )
+              } catch (registerError) {
+                /* 注册失败不影响面板与设置 */
+              }
+              return function () {
+                for (var index = disposers.length - 1; index >= 0; index -= 1) {
+                  try {
+                    disposers[index]()
+                  } catch (disposeError) {
+                    /* 忽略 */
+                  }
+                }
+              }
+            }
+            NATIVE_SYNC = function () {
+              var want = ADAPT === true && HAS_BETTER_SIDEBAR === true
+              if (want && nativeSeat === null) nativeSeat = registerSeat()
+              else if (!want && nativeSeat !== null) {
+                nativeSeat()
+                nativeSeat = null
+              }
+            }
+            NATIVE_SYNC()
+            return function () {
+              if (nativeSeat !== null) {
+                nativeSeat()
+                nativeSeat = null
+              }
+              NATIVE_SYNC = null
+            }
+          })
+
+          // 检测 dsh-better-sidebar：服务出现/消失时重新同步原生页签。
+          var disposeBetterSidebar = safeInject(['betterSidebar'], function () {
+            HAS_BETTER_SIDEBAR = true
+            if (typeof NATIVE_SYNC === 'function') NATIVE_SYNC()
+            return function () {
+              HAS_BETTER_SIDEBAR = false
+              if (typeof NATIVE_SYNC === 'function') NATIVE_SYNC()
+            }
+          })
+
+          // 宿主右侧栏的浏览器：结果链接 / 外部搜索引擎默认在侧边栏浏览器里打开。
+          var disposeSidebarBrowser = safeInject(['sidebarRight'], function (injected) {
+            var service = injected.get('sidebarRight')
+            if (service === undefined || service === null || typeof service.openTab !== 'function') return
+            openInSidebarBrowser = function (url) {
+              service.openTab('browser', { params: { url: url } })
+            }
+            return function () {
+              openInSidebarBrowser = null
+            }
+          })
+
           var disposePanel = ctx.slots.inject('sidebar.panellist', function () {
             return ctx.slots.register(
               {
@@ -2192,10 +2856,17 @@
             )
           })
 
-          // 首次加载设置：决定搜索页是否跨挂载保留状态（默认保留）。
+          // 首次加载设置：保留状态 / 更好的侧边栏适配 / 链接打开方式 / 默认搜索引擎。
           void requestJson('/settings')
             .then(function (payload) {
-              if (payload && payload.settings) PRESERVE_STATE = payload.settings.preserveState !== false
+              if (payload && payload.settings) {
+                PRESERVE_STATE = payload.settings.preserveState !== false
+                ADAPT = payload.settings.betterSidebar !== false
+                OPEN_IN_SIDEBAR = payload.settings.openLinksInSidebar !== false
+                DEFAULT_ENGINE = payload.settings.defaultEngine || 'ai'
+                setCustomEngines(Array.isArray(payload.settings.customEngines) ? payload.settings.customEngines : [])
+                if (typeof NATIVE_SYNC === 'function') NATIVE_SYNC()
+              }
             })
             .catch(function () {
               PRESERVE_STATE = true
@@ -2231,6 +2902,9 @@
             if (typeof disposeSettings === 'function') disposeSettings()
             if (typeof disposePage === 'function') disposePage()
             if (typeof disposePanel === 'function') disposePanel()
+            if (typeof disposeBetterSidebar === 'function') disposeBetterSidebar()
+            if (typeof disposeSidebarTabs === 'function') disposeSidebarTabs()
+            if (typeof disposeSidebarBrowser === 'function') disposeSidebarBrowser()
             if (typeof disposeDict === 'function') disposeDict()
             if (styleElement.parentNode !== null) styleElement.parentNode.removeChild(styleElement)
           }
