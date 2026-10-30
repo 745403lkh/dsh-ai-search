@@ -294,6 +294,11 @@
         officialMapAdd: '添加',
         officialMapDelete: '删除',
         officialMapInvalid: '请填写品牌名，并给出合法的 http(s) 官网首页',
+        officialMapImport: '导入 Excel / CSV',
+        officialMapImportHint: '表格列：品牌名 | 别名（逗号分隔）| 官网首页；支持 .xlsx 和 .csv',
+        officialMapImported: '已导入 {n} 条',
+        officialMapImportEmpty: '文件里没有可导入的行（需要品牌名 + http(s) 官网首页）',
+        officialMapImportError: '导入失败：{message}',
         betterSidebarTabTitle: 'AI 搜索',
         betterSidebarTabDesc: '搜索网页并整理结果',
         betterSidebarLabel: '适配更好的侧边栏',
@@ -435,6 +440,11 @@
         officialMapAdd: 'Add',
         officialMapDelete: 'Delete',
         officialMapInvalid: 'Enter a brand name and a valid http(s) homepage URL',
+        officialMapImport: 'Import Excel / CSV',
+        officialMapImportHint: 'Columns: brand | aliases (comma separated) | homepage; supports .xlsx and .csv',
+        officialMapImported: 'Imported {n} entries',
+        officialMapImportEmpty: 'No importable rows (need a brand name and an http(s) homepage)',
+        officialMapImportError: 'Import failed: {message}',
         betterSidebarTabTitle: 'AI Search',
         betterSidebarTabDesc: 'Search the web with AI curation',
         betterSidebarLabel: 'Better Sidebar integration',
@@ -561,6 +571,7 @@
         '.ais-board-count{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary)}',
         '.ais-feed{display:flex;flex-direction:column;gap:10px}',
         '.ais-feed-card{display:flex;gap:12px;padding:14px 16px;border-radius:13px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1)}',
+        '.ais-feed-card-text{}',
         '.ais-feed-card:hover{border-color:var(--dsw-alias-border-l2)}',
         '.ais-feed-thumb{flex:none;width:112px;height:74px;border-radius:9px;overflow:hidden;background:var(--dsw-alias-bg-layer-2);display:flex;align-items:center;justify-content:center;color:var(--dsw-alias-label-tertiary)}',
         '.ais-feed-thumb img{width:100%;height:100%;object-fit:cover;display:block}',
@@ -1395,12 +1406,14 @@
         var kindKey = KIND_LABELS[item.kind] || 'kindArticle'
         return h(
           'article',
-          { className: 'ais-feed-card' },
-          h(
-            'div',
-            { className: 'ais-feed-thumb' },
-            item.thumbnail ? h('img', { src: item.thumbnail, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' }) : h(ImageGlyph, { size: 20 }),
-          ),
+          { className: 'ais-feed-card' + (item.thumbnail ? '' : ' ais-feed-card-text') },
+          item.thumbnail
+            ? h(
+                'div',
+                { className: 'ais-feed-thumb' },
+                h('img', { src: item.thumbnail, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' }),
+              )
+            : null,
           h(
             'div',
             { className: 'ais-feed-body' },
@@ -1426,10 +1439,15 @@
       function ImageCard(props) {
         var t = props.t
         var item = props.item
+        if (!item.thumbnail) return null
         return h(
           'a',
           linkProps('ais-image-card', item.url, item.url),
-          h('div', { className: 'ais-image-box' }, item.thumbnail ? h('img', { src: item.thumbnail, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' }) : h(ImageGlyph, { size: 22 })),
+          h(
+            'div',
+            { className: 'ais-image-box' },
+            h('img', { src: item.thumbnail, alt: '', loading: 'lazy', referrerPolicy: 'no-referrer' }),
+          ),
           h(
             'div',
             { className: 'ais-image-info' },
@@ -2218,6 +2236,224 @@
       // ------------------------------------------------------------------
       // 设置页：结果语言 / 百科档位 / 浏览权重 / 搜索历史
       // ------------------------------------------------------------------
+      // ------------------------------------------------------------------
+      // 官网映射导入：CSV / XLSX（浏览器端解析，不依赖第三方库）
+      // ------------------------------------------------------------------
+      function xmlDecodeText(value) {
+        return String(value === undefined || value === null ? '' : value)
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&apos;/g, "'")
+          .replace(/&#(\d+);/g, function (match, code) {
+            return String.fromCharCode(Number(code))
+          })
+          .replace(/&#x([0-9a-f]+);/gi, function (match, code) {
+            return String.fromCharCode(Number.parseInt(code, 16))
+          })
+          .replace(/&amp;/g, '&')
+      }
+
+      function splitSheetLine(line) {
+        var cells = []
+        var current = ''
+        var quoted = false
+        for (var index = 0; index < line.length; index += 1) {
+          var ch = line[index]
+          if (quoted) {
+            if (ch === '"') {
+              if (line[index + 1] === '"') {
+                current += '"'
+                index += 1
+              } else {
+                quoted = false
+              }
+            } else {
+              current += ch
+            }
+          } else if (ch === '"') {
+            quoted = true
+          } else if (ch === ',' || ch === '\t') {
+            cells.push(current)
+            current = ''
+          } else {
+            current += ch
+          }
+        }
+        cells.push(current)
+        return cells
+      }
+
+      /** 行数组 → [{ name, aliases, homepage }]；首行是表头时跳过。 */
+      function rowsToOfficialSheet(rows) {
+        var list = Array.isArray(rows) ? rows : []
+        var start = 0
+        if (list.length > 0) {
+          var header = (list[0] || []).map(function (cell) {
+            return String(cell || '').trim().toLowerCase()
+          })
+          var looksLikeHeader = header.some(function (cell) {
+            return cell.indexOf('品牌') >= 0 || cell.indexOf('名称') >= 0 || cell.indexOf('name') >= 0 || cell.indexOf('官网') >= 0 || cell.indexOf('homepage') >= 0
+          })
+          if (looksLikeHeader) start = 1
+        }
+        var out = []
+        for (var index = start; index < list.length; index += 1) {
+          var row = list[index] || []
+          var name = String(row[0] === undefined ? '' : row[0]).trim()
+          if (name === '') continue
+          var aliases = String(row[1] === undefined ? '' : row[1])
+            .split(/[,，、;；]/)
+            .map(function (entry) {
+              return entry.trim()
+            })
+            .filter(function (entry) {
+              return entry !== ''
+            })
+          var homepage = String(row[2] === undefined ? '' : row[2]).trim()
+          if (!/^https?:\/\//i.test(homepage)) continue
+          try {
+            var parsed = new URL(homepage)
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue
+          } catch (parseError) {
+            continue
+          }
+          out.push({ name: name, aliases: aliases, homepage: homepage })
+        }
+        return out
+      }
+
+      /** 解析 CSV / TSV 文本。 */
+      function parseOfficialSheetCsv(text) {
+        var clean = String(text === undefined || text === null ? '' : text).replace(/^\uFEFF/, '')
+        var rows = clean
+          .split(/\r?\n/)
+          .filter(function (line) {
+            return line.trim() !== ''
+          })
+          .map(splitSheetLine)
+        return rowsToOfficialSheet(rows)
+      }
+
+      /** deflate-raw 解压（xlsx 内部是 zip，条目多为 deflate）。 */
+      async function inflateRawBytes(bytes) {
+        if (typeof DecompressionStream !== 'function') throw new Error('当前环境不支持解压 xlsx，请另存为 CSV 再导入')
+        var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))
+        var buffer = await new Response(stream).arrayBuffer()
+        return new Uint8Array(buffer)
+      }
+
+      /** 读取 zip（xlsx）内部条目：name → Uint8Array。 */
+      async function readZipEntries(buffer) {
+        var view = new DataView(buffer)
+        var bytes = new Uint8Array(buffer)
+        var eocd = -1
+        var minOffset = Math.max(0, bytes.length - 22 - 65535)
+        for (var index = bytes.length - 22; index >= minOffset; index -= 1) {
+          if (view.getUint32(index, true) === 0x06054b50) {
+            eocd = index
+            break
+          }
+        }
+        if (eocd < 0) throw new Error('不是有效的 xlsx 文件')
+        var count = view.getUint16(eocd + 10, true)
+        var centralOffset = view.getUint32(eocd + 16, true)
+        var entries = {}
+        var pointer = centralOffset
+        for (var entryIndex = 0; entryIndex < count; entryIndex += 1) {
+          if (view.getUint32(pointer, true) !== 0x02014b50) break
+          var method = view.getUint16(pointer + 10, true)
+          var compressedSize = view.getUint32(pointer + 20, true)
+          var nameLength = view.getUint16(pointer + 28, true)
+          var extraLength = view.getUint16(pointer + 30, true)
+          var commentLength = view.getUint16(pointer + 32, true)
+          var localOffset = view.getUint32(pointer + 42, true)
+          var name = new TextDecoder().decode(bytes.slice(pointer + 46, pointer + 46 + nameLength))
+          var localNameLength = view.getUint16(localOffset + 26, true)
+          var localExtraLength = view.getUint16(localOffset + 28, true)
+          var dataStart = localOffset + 30 + localNameLength + localExtraLength
+          var data = bytes.slice(dataStart, dataStart + compressedSize)
+          if (method === 0) entries[name] = data
+          else if (method === 8) entries[name] = await inflateRawBytes(data)
+          pointer += 46 + nameLength + extraLength + commentLength
+        }
+        return entries
+      }
+
+      /** 解析 xlsx：取第一个工作表，转成行数组后复用 CSV 的列映射。 */
+      async function parseOfficialSheetXlsx(buffer) {
+        var entries = await readZipEntries(buffer)
+        var decoder = new TextDecoder()
+        var shared = []
+        if (entries['xl/sharedStrings.xml'] !== undefined) {
+          var sharedXml = decoder.decode(entries['xl/sharedStrings.xml'])
+          var sharedItems = sharedXml.match(/<si>[\s\S]*?<\/si>/g) || []
+          sharedItems.forEach(function (item) {
+            var parts = item.match(/<t[^>]*>[\s\S]*?<\/t>/g) || []
+            shared.push(
+              parts
+                .map(function (part) {
+                  return xmlDecodeText(part.replace(/<[^>]+>/g, ''))
+                })
+                .join(''),
+            )
+          })
+        }
+        var sheetKey = Object.keys(entries)
+          .filter(function (key) {
+            return /^xl\/worksheets\/sheet\d+\.xml$/.test(key)
+          })
+          .sort()[0]
+        if (sheetKey === undefined) throw new Error('xlsx 里没有工作表')
+        var sheetXml = decoder.decode(entries[sheetKey])
+        var rows = []
+        var rowItems = sheetXml.match(/<row[^>]*>[\s\S]*?<\/row>/g) || []
+        rowItems.forEach(function (rowXml) {
+          var cells = {}
+          var cellRegex = /<c([^>]*)>([\s\S]*?)<\/c>/g
+          var match = cellRegex.exec(rowXml)
+          while (match !== null) {
+            var attrs = match[1]
+            var inner = match[2]
+            var refMatch = /r="([A-Z]+)\d+"/.exec(attrs)
+            if (refMatch !== null) {
+              var column = 0
+              var letters = refMatch[1]
+              for (var letterIndex = 0; letterIndex < letters.length; letterIndex += 1) {
+                column = column * 26 + (letters.charCodeAt(letterIndex) - 64)
+              }
+              var typeMatch = /t="([^"]+)"/.exec(attrs)
+              var type = typeMatch === null ? '' : typeMatch[1]
+              var value = ''
+              if (type === 's') {
+                var sharedValue = /<v>([\s\S]*?)<\/v>/.exec(inner)
+                if (sharedValue !== null) value = shared[Number(sharedValue[1])] || ''
+              } else if (type === 'inlineStr') {
+                var parts = inner.match(/<t[^>]*>[\s\S]*?<\/t>/g) || []
+                value = parts
+                  .map(function (part) {
+                    return xmlDecodeText(part.replace(/<[^>]+>/g, ''))
+                  })
+                  .join('')
+              } else {
+                var rawValue = /<v>([\s\S]*?)<\/v>/.exec(inner)
+                value = rawValue === null ? '' : xmlDecodeText(rawValue[1])
+              }
+              cells[column - 1] = value.trim()
+            }
+            match = cellRegex.exec(rowXml)
+          }
+          var maxIndex = -1
+          Object.keys(cells).forEach(function (key) {
+            maxIndex = Math.max(maxIndex, Number(key))
+          })
+          var row = []
+          for (var cellIndex = 0; cellIndex <= maxIndex; cellIndex += 1) row.push(cells[cellIndex] === undefined ? '' : cells[cellIndex])
+          rows.push(row)
+        })
+        return rowsToOfficialSheet(rows)
+      }
+
       function SettingsPage(props) {
         var locale = props && props.locale
         var localized = useLocale(locale)
@@ -2240,6 +2476,8 @@
           customSiteAliases: '',
           customSiteHomepage: '',
           customSiteError: '',
+          importMessage: '',
+          importError: '',
           saving: false,
           saved: false,
           error: '',
@@ -2253,6 +2491,7 @@
         var saveSeqRef = React.useRef(0)
         var weightsTimerRef = React.useRef(null)
         var loadedRef = React.useRef(false)
+        var importInputRef = React.useRef(null)
 
         React.useEffect(function () {
           aliveRef.current = true
@@ -2506,6 +2745,66 @@
             save({ customOfficialSites: nextList })
           },
           [settings.customOfficialSites, save],
+        )
+
+        var onImportOfficialFile = React.useCallback(
+          function (event) {
+            var input = event && event.target ? event.target : null
+            var file = input && input.files && input.files.length > 0 ? input.files[0] : null
+            if (!file) return
+            var fileName = String(file.name || '').toLowerCase()
+            var parsedPromise
+            try {
+              if (fileName.endsWith('.xlsx')) parsedPromise = file.arrayBuffer().then(parseOfficialSheetXlsx)
+              else parsedPromise = file.text().then(parseOfficialSheetCsv)
+            } catch (readError) {
+              parsedPromise = Promise.reject(readError)
+            }
+            setSettings(function (previous) {
+              return { ...previous, importMessage: '', importError: '' }
+            })
+            parsedPromise
+              .then(function (rows) {
+                var imported = Array.isArray(rows) ? rows : []
+                if (imported.length === 0) {
+                  setSettings(function (previous) {
+                    return { ...previous, importError: t('officialMapImportEmpty') }
+                  })
+                  return
+                }
+                var currentList = settings.customOfficialSites || []
+                var seen = {}
+                currentList.forEach(function (entry) {
+                  seen[String(entry.homepage || '').toLowerCase()] = true
+                })
+                var nextList = currentList.slice()
+                var added = 0
+                imported.forEach(function (row) {
+                  var key = String(row.homepage).toLowerCase()
+                  if (seen[key]) return
+                  seen[key] = true
+                  nextList.push(row)
+                  added += 1
+                })
+                setSettings(function (previous) {
+                  return {
+                    ...previous,
+                    customOfficialSites: nextList,
+                    importMessage: format(t('officialMapImported'), { n: added }),
+                    importError: '',
+                  }
+                })
+                save({ customOfficialSites: nextList })
+              })
+              .catch(function (importFailure) {
+                var message = importFailure && importFailure.message ? importFailure.message : String(importFailure)
+                setSettings(function (previous) {
+                  return { ...previous, importError: format(t('officialMapImportError'), { message: message }) }
+                })
+              })
+            if (input) input.value = ''
+          },
+          [settings.customOfficialSites, save, t],
         )
 
         React.useEffect(
@@ -2894,6 +3193,31 @@
                   }),
                   h('button', { type: 'button', className: 'ais-pref-button', onClick: addOfficialSite }, t('officialMapAdd')),
                 ),
+                h(
+                  'div',
+                  { className: 'ais-custom-form' },
+                  h('input', {
+                    type: 'file',
+                    accept: '.xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    style: { display: 'none' },
+                    ref: importInputRef,
+                    onChange: onImportOfficialFile,
+                  }),
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'ais-pref-button',
+                      onClick: function () {
+                        if (importInputRef.current && typeof importInputRef.current.click === 'function') importInputRef.current.click()
+                      },
+                    },
+                    t('officialMapImport'),
+                  ),
+                  h('span', { className: 'ais-pref-hint' }, t('officialMapImportHint')),
+                ),
+                settings.importMessage !== '' ? h('p', { className: 'ais-pref-hint' }, settings.importMessage) : null,
+                settings.importError !== '' ? h('p', { className: 'ais-pref-hint ais-pref-status-error' }, settings.importError) : null,
                 settings.customSiteError !== '' ? h('p', { className: 'ais-pref-hint ais-pref-status-error' }, settings.customSiteError) : null,
               ),
               h(
@@ -3112,7 +3436,7 @@
         }, NS + ': panel, page and settings')
       }
 
-      return { name: name, inject: inject, apply: apply }
+      return { name: name, inject: inject, apply: apply, parseOfficialSheetCsv: parseOfficialSheetCsv, parseOfficialSheetXlsx: parseOfficialSheetXlsx }
     },
   })
 })()

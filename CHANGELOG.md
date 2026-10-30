@@ -1,20 +1,50 @@
-# 更新日志 / Changelog
+# 鏇存柊鏃ュ織 / Changelog
+
+## [1.4.4-beta.4] - 2026-10-30
+
+### 涓枃
+
+**鏂板**
+- 瀹樼綉璇嗗埆鏄犲皠**鍙栨秷鏁伴噺涓婇檺**锛屽苟鏀寔浠?**Excel锛?xlsx锛? CSV** 瀵煎叆锛氳〃鏍煎垪涓?  鍝佺墝鍚?| 鍒悕锛堥€楀彿鍒嗛殧锛墊 瀹樼綉棣栭〉锛屽鍏ユ椂鑷姩鍘婚噸銆佸悎骞惰繘鐜版湁鏄犲皠
+- 娴忚妯″紡**鍥剧墖鏉垮潡澶氭簮妫€绱?*锛氬儚瑙嗛涓€鏍风敤 `site:` 瀹氬悜鍥剧墖绔欙紙Unsplash / Pexels / Pixabay /
+  鑺辩摚 / 鍫嗙硸 绛夋寜椤佃疆鎹級锛屽浘鐗囩被鍨嬪彧璁ゅ浘鐗囩珯锛屽噺灏戞櫘閫氱綉椤垫贩鍏?
+**鏀硅繘**
+- **缂╃暐鍥炬湁鎵嶆樉绀?*锛氭嬁涓嶅埌鍥剧殑鍗＄墖涓嶅啀鏄剧ず绌哄浘鐗囨锛屾敼涓虹函鏂囧瓧鍗＄墖锛?  鍥剧墖 URL 鐩撮摼鐩存帴褰撶缉鐣ュ浘锛堢渷涓€娆℃姄鍙栵級锛孻ouTube 浠嶈嚜鍔ㄦ帹瀵煎皝闈紝鍏朵綑鎶?`og:image`
+- **鍥剧墖鏉垮潡鍙斁鏈夊浘鐨勬潯鐩?*锛氭病鎶撳埌缂╃暐鍥剧殑鍥剧墖鏉＄洰闄嶇骇涓烘櫘閫氭潯鐩紙鏂囧瓧灞曠ず锛夛紝涓嶅啀鍑虹幇绌哄浘鍗犱綅
+
+**娴嬭瘯**
+- 6 涓嚜娴嬪浠跺叏閮ㄩ€氳繃锛涙柊澧炪€屾棤鍥炬潯鐩檷绾с€嶃€岀洿閾惧浘鐗囦笉鎶撳彇銆嶃€屽浘鐗囨爮鍙惈鏈夊浘鏉＄洰銆?  銆孋SV/XLSX 瀵煎叆瑙ｆ瀽銆嶃€屾槧灏勪笉闄愰噺銆嶇瓑鏂█
+
+### English
+
+**Added**
+- The official-site mapping editor now has **no entry limit** and supports **Excel (.xlsx) / CSV
+  import**: columns are brand | aliases (comma separated) | homepage; duplicates are merged into the
+  existing mapping
+- Browse **image board now searches multiple image sites** with `site:` targeting (Unsplash / Pexels /
+  Pixabay / Huaban / Duitang, rotated per page) and only accepts image sites for the image kind
+
+**Changed**
+- **Thumbnails are only rendered when available**: cards without a thumbnail no longer show an empty
+  image box and fall back to a text-only card; direct image URLs are used as thumbnails without an
+  extra fetch, YouTube covers are derived, others use `og:image`
+- **The image board only contains items with images**: image items without a thumbnail are degraded
+  to regular (text) items instead of leaving empty placeholders
+
+**Testing**
+- All 6 test suites pass; added assertions for imageless-item degradation, direct image URLs not
+  being fetched, image board filtering, CSV/XLSX import parsing, and unlimited mapping entries
 
 ## [1.4.4-beta.3] - 2026-10-30
 
-### 中文
+### 涓枃
 
-**新增**
-- 内置官网映射从 50+ 扩充到 **200+ 品牌**：新增必应、Steam、Epic、米哈游、原神、崩坏系列、
-  任天堂/PlayStation/Xbox、腾讯云/阿里云/华为云、ChatGPT/Claude/Gemini/通义/文心一言/豆包/Kimi、
-  汽车/银行/餐饮/零售/媒体/教育等常见品牌
-- 设置里新增**「官网识别映射」编辑器**：可自定义品牌名、别名（逗号分隔）与官网首页 URL，
-  可添加多个、可删除；自定义映射优先于内置表，保存后立即生效
-- 浏览模式的官网识别现在会读取设置里的自定义映射（Host 侧每次检索实时使用）
+**鏂板**
+- 鍐呯疆瀹樼綉鏄犲皠浠?50+ 鎵╁厖鍒?**200+ 鍝佺墝**锛氭柊澧炲繀搴斻€丼team銆丒pic銆佺背鍝堟父銆佸師绁炪€佸穿鍧忕郴鍒椼€?  浠诲ぉ鍫?PlayStation/Xbox銆佽吘璁簯/闃块噷浜?鍗庝负浜戙€丆hatGPT/Claude/Gemini/閫氫箟/鏂囧績涓€瑷€/璞嗗寘/Kimi銆?  姹借溅/閾惰/椁愰ギ/闆跺敭/濯掍綋/鏁欒偛绛夊父瑙佸搧鐗?- 璁剧疆閲屾柊澧?*銆屽畼缃戣瘑鍒槧灏勩€嶇紪杈戝櫒**锛氬彲鑷畾涔夊搧鐗屽悕銆佸埆鍚嶏紙閫楀彿鍒嗛殧锛変笌瀹樼綉棣栭〉 URL锛?  鍙坊鍔犲涓€佸彲鍒犻櫎锛涜嚜瀹氫箟鏄犲皠浼樺厛浜庡唴缃〃锛屼繚瀛樺悗绔嬪嵆鐢熸晥
+- 娴忚妯″紡鐨勫畼缃戣瘑鍒幇鍦ㄤ細璇诲彇璁剧疆閲岀殑鑷畾涔夋槧灏勶紙Host 渚ф瘡娆℃绱㈠疄鏃朵娇鐢級
 
-**测试**
-- 6 个自测套件全部通过；新增必应/Steam/米哈游/原神映射、自定义映射优先、设置保存/非法项/清空、
-  自定义映射接入浏览模式等断言
+**娴嬭瘯**
+- 6 涓嚜娴嬪浠跺叏閮ㄩ€氳繃锛涙柊澧炲繀搴?Steam/绫冲搱娓?鍘熺鏄犲皠銆佽嚜瀹氫箟鏄犲皠浼樺厛銆佽缃繚瀛?闈炴硶椤?娓呯┖銆?  鑷畾涔夋槧灏勬帴鍏ユ祻瑙堟ā寮忕瓑鏂█
 
 ### English
 
@@ -33,15 +63,13 @@
 
 ## [1.4.4-beta.2] - 2026-10-30
 
-### 中文
+### 涓枃
 
-**修复**
-- 官网识别改为**只认官网首页**：只把品牌官网首页（如 `www.baidu.com`）置顶并标「官方」；
-  官网域名下的其它页面（如 `ir.baidu.com` 股价页、`www.baidu.com/s?wd=` 搜索页）不再被当成官网
-- 保证第 1 页一定有官网首页：检索结果里没有首页时补一条首页条目；第 2 页起不重复
-
-**测试**
-- 6 个自测套件全部通过；新增「股价页不算官网」「搜索页不算官网」「补首页并置顶」等断言
+**淇**
+- 瀹樼綉璇嗗埆鏀逛负**鍙瀹樼綉棣栭〉**锛氬彧鎶婂搧鐗屽畼缃戦椤碉紙濡?`www.baidu.com`锛夌疆椤跺苟鏍囥€屽畼鏂广€嶏紱
+  瀹樼綉鍩熷悕涓嬬殑鍏跺畠椤甸潰锛堝 `ir.baidu.com` 鑲′环椤点€乣www.baidu.com/s?wd=` 鎼滅储椤碉級涓嶅啀琚綋鎴愬畼缃?- 淇濊瘉绗?1 椤典竴瀹氭湁瀹樼綉棣栭〉锛氭绱㈢粨鏋滈噷娌℃湁棣栭〉鏃惰ˉ涓€鏉￠椤垫潯鐩紱绗?2 椤佃捣涓嶉噸澶?
+**娴嬭瘯**
+- 6 涓嚜娴嬪浠跺叏閮ㄩ€氳繃锛涙柊澧炪€岃偂浠烽〉涓嶇畻瀹樼綉銆嶃€屾悳绱㈤〉涓嶇畻瀹樼綉銆嶃€岃ˉ棣栭〉骞剁疆椤躲€嶇瓑鏂█
 
 ### English
 
@@ -58,24 +86,20 @@
 
 ## [1.4.4-beta.1] - 2026-10-30
 
-### 中文
+### 涓枃
 
-**新增**
-- 浏览模式**官网识别**：内置常见品牌 → 官方域名映射（微信、淘宝、京东、抖音、百度、DeepSeek、
-  Google、微软等 50+ 品牌），品牌词搜索时官网结果置顶并标「官方」
-- 检索结果里没有官网时，第 1 页自动补一条官网首页（第 2 页起不重复），卡片与工具输出都带官方标识
-- 「综合」板块新增「官方」置顶分组；分栏内官网条目同样置顶
-
-**改进**
-- `curated_search` 工具输出新增 `browse.items[].official` 字段，渲染为「· 官方」
-
-**测试**
-- 6 个自测套件全部通过；新增官网映射、子域名识别、置顶排序、补官网首页、非品牌词不误标等断言
+**鏂板**
+- 娴忚妯″紡**瀹樼綉璇嗗埆**锛氬唴缃父瑙佸搧鐗?鈫?瀹樻柟鍩熷悕鏄犲皠锛堝井淇°€佹窐瀹濄€佷含涓溿€佹姈闊炽€佺櫨搴︺€丏eepSeek銆?  Google銆佸井杞瓑 50+ 鍝佺墝锛夛紝鍝佺墝璇嶆悳绱㈡椂瀹樼綉缁撴灉缃《骞舵爣銆屽畼鏂广€?- 妫€绱㈢粨鏋滈噷娌℃湁瀹樼綉鏃讹紝绗?1 椤佃嚜鍔ㄨˉ涓€鏉″畼缃戦椤碉紙绗?2 椤佃捣涓嶉噸澶嶏級锛屽崱鐗囦笌宸ュ叿杈撳嚭閮藉甫瀹樻柟鏍囪瘑
+- 銆岀患鍚堛€嶆澘鍧楁柊澧炪€屽畼鏂广€嶇疆椤跺垎缁勶紱鍒嗘爮鍐呭畼缃戞潯鐩悓鏍风疆椤?
+**鏀硅繘**
+- `curated_search` 宸ュ叿杈撳嚭鏂板 `browse.items[].official` 瀛楁锛屾覆鏌撲负銆屄?瀹樻柟銆?
+**娴嬭瘯**
+- 6 涓嚜娴嬪浠跺叏閮ㄩ€氳繃锛涙柊澧炲畼缃戞槧灏勩€佸瓙鍩熷悕璇嗗埆銆佺疆椤舵帓搴忋€佽ˉ瀹樼綉棣栭〉銆侀潪鍝佺墝璇嶄笉璇爣绛夋柇瑷€
 
 ### English
 
 **Added**
-- Browse mode **official-site recognition**: a curated brand → official-domain map (WeChat, Taobao,
+- Browse mode **official-site recognition**: a curated brand 鈫?official-domain map (WeChat, Taobao,
   JD, Douyin, Baidu, DeepSeek, Google, Microsoft and 50+ more). Brand queries pin the official site
   first and badge it "Official"
 - When search results contain no official site, page 1 adds a synthetic official homepage entry
@@ -83,7 +107,7 @@
 - The All board renders a pinned "Official" group first; official items are also pinned inside boards
 
 **Changed**
-- `curated_search` output gains `browse.items[].official`, rendered as "· 官方"/"· Official"
+- `curated_search` output gains `browse.items[].official`, rendered as "路 瀹樻柟"/"路 Official"
 
 **Testing**
 - All 6 test suites pass; added assertions for the brand map, subdomain recognition, pinning order,
@@ -91,21 +115,15 @@
 
 ## [1.4.3-fix1] - 2026-10-30
 
-### 中文
+### 涓枃
 
-**修复**
-- `package.json` 补齐 `repository` / `homepage` / `bugs` / `license`（MIT）/ `keywords` / `author`，
-  npm 页面现在能链接回 GitHub 仓库
-- 答疑模式的「精读」口径：新增 `fetchAttempted` / `fetchFailed` / `curationBasis` 统计，
-  正文未读取或只读到部分时，界面与工具文案改为「精读 x/y 篇」或「未读取正文（摘要基于检索片段）」，
-  不再出现「精读 0 篇」却仍有摘要的误导
-- `curated_search` 工具补齐 `exclude` 参数并在浏览模式翻页时透传，翻页可以按 URL 去重
-  （此前只有客户端会传 exclude）
-- 浏览模式：「综合」改为全部候选（最多 36 条）按加权分排序，文章 / 视频 / 图片分栏是它的
-  子集（各最多 12 条），修复「分栏里出现综合中没有的条目」
-
-**测试**
-- 6 个自测套件全部通过；新增了分栏 ⊆ 综合、工具 exclude 透传、精读口径提示等断言
+**淇**
+- `package.json` 琛ラ綈 `repository` / `homepage` / `bugs` / `license`锛圡IT锛? `keywords` / `author`锛?  npm 椤甸潰鐜板湪鑳介摼鎺ュ洖 GitHub 浠撳簱
+- 绛旂枒妯″紡鐨勩€岀簿璇汇€嶅彛寰勶細鏂板 `fetchAttempted` / `fetchFailed` / `curationBasis` 缁熻锛?  姝ｆ枃鏈鍙栨垨鍙鍒伴儴鍒嗘椂锛岀晫闈笌宸ュ叿鏂囨鏀逛负銆岀簿璇?x/y 绡囥€嶆垨銆屾湭璇诲彇姝ｆ枃锛堟憳瑕佸熀浜庢绱㈢墖娈碉級銆嶏紝
+  涓嶅啀鍑虹幇銆岀簿璇?0 绡囥€嶅嵈浠嶆湁鎽樿鐨勮瀵?- `curated_search` 宸ュ叿琛ラ綈 `exclude` 鍙傛暟骞跺湪娴忚妯″紡缈婚〉鏃堕€忎紶锛岀炕椤靛彲浠ユ寜 URL 鍘婚噸
+  锛堟鍓嶅彧鏈夊鎴风浼氫紶 exclude锛?- 娴忚妯″紡锛氥€岀患鍚堛€嶆敼涓哄叏閮ㄥ€欓€夛紙鏈€澶?36 鏉★級鎸夊姞鏉冨垎鎺掑簭锛屾枃绔?/ 瑙嗛 / 鍥剧墖鍒嗘爮鏄畠鐨?  瀛愰泦锛堝悇鏈€澶?12 鏉★級锛屼慨澶嶃€屽垎鏍忛噷鍑虹幇缁煎悎涓病鏈夌殑鏉＄洰銆?
+**娴嬭瘯**
+- 6 涓嚜娴嬪浠跺叏閮ㄩ€氳繃锛涙柊澧炰簡鍒嗘爮 鈯?缁煎悎銆佸伐鍏?exclude 閫忎紶銆佺簿璇诲彛寰勬彁绀虹瓑鏂█
 
 ### English
 
@@ -126,31 +144,23 @@
 
 ## [1.4.3] - 2026-10-29
 
-### 中文
+### 涓枃
 
-**新增**
-- **更好的侧边栏（dsh-better-sidebar）适配**：在宿主右侧栏注册「AI 搜索」页签（可在设置里关闭）
-- 侧边栏里的搜索页左侧带**引擎栏**：AI 搜索（默认）/ 百度 / 必应 / Google / 搜狗 + 自定义引擎
-- **像浏览器一样多开**：右侧栏可同时打开多个 AI 搜索页签，每个页签有独立的输入、模式、结果与板块
-- 结果 / 来源 / 图片 / 浏览卡片默认在**侧边栏浏览器**里打开，也可改为系统默认浏览器
-- 设置里可添加**多个自定义搜索引擎**（名称 + 网址模板，`*#*#*#*` 代替搜索词），可删除、可设为默认
-- 统一风格的引擎图标（24×24 单色）：百度 / Google 用官方 logo 路径，必应 / 搜狗同风格手绘，
-  自定义引擎用首字母方块
-
-**改进**
-- 切换到非 AI 引擎时自动隐藏三模式（答疑 / 百科 / 浏览）切换
-- 删除正在使用的自定义引擎后，默认引擎自动回落 AI 搜索
-- 没有安装 better-sidebar 的用户完全不受影响（可选注入，检测不到就跳过）
-
-**Beta 过程**
-- `1.4.3-beta.1`：侧边栏适配初版（页签、左侧引擎栏、链接打开方式、适配开关）
-- `1.4.3-beta.2`：统一引擎图标；自定义搜索引擎；页签多开的第一版（描述符层）
-- `1.4.3-beta.3`：改用宿主 `sidebarRightTabs` 的 `multiple: true`，实现真正的浏览器式多开，
-  并按页签 id 隔离页面状态
-
-**测试**
-- 6 个自测套件全部通过；新增了原生页签注册（multiple / guide / 页签实体槽）、
-  多实例渲染、自定义引擎增删与校验、引擎栏图标等断言
+**鏂板**
+- **鏇村ソ鐨勪晶杈规爮锛坉sh-better-sidebar锛夐€傞厤**锛氬湪瀹夸富鍙充晶鏍忔敞鍐屻€孉I 鎼滅储銆嶉〉绛撅紙鍙湪璁剧疆閲屽叧闂級
+- 渚ц竟鏍忛噷鐨勬悳绱㈤〉宸︿晶甯?*寮曟搸鏍?*锛欰I 鎼滅储锛堥粯璁わ級/ 鐧惧害 / 蹇呭簲 / Google / 鎼滅嫍 + 鑷畾涔夊紩鎿?- **鍍忔祻瑙堝櫒涓€鏍峰寮€**锛氬彸渚ф爮鍙悓鏃舵墦寮€澶氫釜 AI 鎼滅储椤电锛屾瘡涓〉绛炬湁鐙珛鐨勮緭鍏ャ€佹ā寮忋€佺粨鏋滀笌鏉垮潡
+- 缁撴灉 / 鏉ユ簮 / 鍥剧墖 / 娴忚鍗＄墖榛樿鍦?*渚ц竟鏍忔祻瑙堝櫒**閲屾墦寮€锛屼篃鍙敼涓虹郴缁熼粯璁ゆ祻瑙堝櫒
+- 璁剧疆閲屽彲娣诲姞**澶氫釜鑷畾涔夋悳绱㈠紩鎿?*锛堝悕绉?+ 缃戝潃妯℃澘锛宍*#*#*#*` 浠ｆ浛鎼滅储璇嶏級锛屽彲鍒犻櫎銆佸彲璁句负榛樿
+- 缁熶竴椋庢牸鐨勫紩鎿庡浘鏍囷紙24脳24 鍗曡壊锛夛細鐧惧害 / Google 鐢ㄥ畼鏂?logo 璺緞锛屽繀搴?/ 鎼滅嫍鍚岄鏍兼墜缁橈紝
+  鑷畾涔夊紩鎿庣敤棣栧瓧姣嶆柟鍧?
+**鏀硅繘**
+- 鍒囨崲鍒伴潪 AI 寮曟搸鏃惰嚜鍔ㄩ殣钘忎笁妯″紡锛堢瓟鐤?/ 鐧剧 / 娴忚锛夊垏鎹?- 鍒犻櫎姝ｅ湪浣跨敤鐨勮嚜瀹氫箟寮曟搸鍚庯紝榛樿寮曟搸鑷姩鍥炶惤 AI 鎼滅储
+- 娌℃湁瀹夎 better-sidebar 鐨勭敤鎴峰畬鍏ㄤ笉鍙楀奖鍝嶏紙鍙€夋敞鍏ワ紝妫€娴嬩笉鍒板氨璺宠繃锛?
+**Beta 杩囩▼**
+- `1.4.3-beta.1`锛氫晶杈规爮閫傞厤鍒濈増锛堥〉绛俱€佸乏渚у紩鎿庢爮銆侀摼鎺ユ墦寮€鏂瑰紡銆侀€傞厤寮€鍏筹級
+- `1.4.3-beta.2`锛氱粺涓€寮曟搸鍥炬爣锛涜嚜瀹氫箟鎼滅储寮曟搸锛涢〉绛惧寮€鐨勭涓€鐗堬紙鎻忚堪绗﹀眰锛?- `1.4.3-beta.3`锛氭敼鐢ㄥ涓?`sidebarRightTabs` 鐨?`multiple: true`锛屽疄鐜扮湡姝ｇ殑娴忚鍣ㄥ紡澶氬紑锛?  骞舵寜椤电 id 闅旂椤甸潰鐘舵€?
+**娴嬭瘯**
+- 6 涓嚜娴嬪浠跺叏閮ㄩ€氳繃锛涙柊澧炰簡鍘熺敓椤电娉ㄥ唽锛坢ultiple / guide / 椤电瀹炰綋妲斤級銆?  澶氬疄渚嬫覆鏌撱€佽嚜瀹氫箟寮曟搸澧炲垹涓庢牎楠屻€佸紩鎿庢爮鍥炬爣绛夋柇瑷€
 
 ### English
 
@@ -165,7 +175,7 @@
   system browser
 - Add **multiple custom search engines** in Settings (name + URL template with `*#*#*#*` as the query
   placeholder); deletable and usable as the default engine
-- Unified 24×24 monochrome engine icons: official logo paths for Baidu/Google, hand-drawn matching
+- Unified 24脳24 monochrome engine icons: official logo paths for Baidu/Google, hand-drawn matching
   glyphs for Bing/Sogou, letter tiles for custom engines
 
 **Changed**
@@ -186,11 +196,8 @@
 
 ## [1.4.2] - 2026-10-28
 
-### 中文
-- **安全加固**：移除无来源守卫的 `GET /search` 调试接口；所有接口要求本地客户端请求头
-  `x-dsh-ai-search: 1`，并校验回环 Host/Origin（防跨站与 DNS rebinding）；搜索限流 10 次/分钟；
-  响应加 `nosniff` / `no-referrer`，不输出 CORS 头
-- 破坏性变更：`GET /search` 不再可用；本机 curl 调试需带请求头；升级后刷新页面
+### 涓枃
+- **瀹夊叏鍔犲浐**锛氱Щ闄ゆ棤鏉ユ簮瀹堝崼鐨?`GET /search` 璋冭瘯鎺ュ彛锛涙墍鏈夋帴鍙ｈ姹傛湰鍦板鎴风璇锋眰澶?  `x-dsh-ai-search: 1`锛屽苟鏍￠獙鍥炵幆 Host/Origin锛堥槻璺ㄧ珯涓?DNS rebinding锛夛紱鎼滅储闄愭祦 10 娆?鍒嗛挓锛?  鍝嶅簲鍔?`nosniff` / `no-referrer`锛屼笉杈撳嚭 CORS 澶?- 鐮村潖鎬у彉鏇达細`GET /search` 涓嶅啀鍙敤锛涙湰鏈?curl 璋冭瘯闇€甯﹁姹傚ご锛涘崌绾у悗鍒锋柊椤甸潰
 
 ### English
 - **Security hardening**: removed the unguarded `GET /search` debug endpoint; every endpoint now
@@ -202,9 +209,8 @@
 
 ## [1.4.1] - 2026-10-27
 
-### 中文
-- 站点上限按类型区分（视频/图片站 10 条，普通站 5 条），超出只标「已精简」，不再算广告
-- 放宽广告判定：去掉佣金/返利/领券/优惠券码/限时特惠等弱信号，移除 newsbreak.com
+### 涓枃
+- 绔欑偣涓婇檺鎸夌被鍨嬪尯鍒嗭紙瑙嗛/鍥剧墖绔?10 鏉★紝鏅€氱珯 5 鏉★級锛岃秴鍑哄彧鏍囥€屽凡绮剧畝銆嶏紝涓嶅啀绠楀箍鍛?- 鏀惧骞垮憡鍒ゅ畾锛氬幓鎺変剑閲?杩斿埄/棰嗗埜/浼樻儬鍒哥爜/闄愭椂鐗规儬绛夊急淇″彿锛岀Щ闄?newsbreak.com
 
 ### English
 - Per-site caps by type (video/image sites 10, ordinary sites 5); overflow is labeled "trimmed"
@@ -214,20 +220,19 @@
 
 ## [1.4.0] - 2026-10-27
 
-### 中文
-- 新增设置「切换页面时保留结果」；「综合」板块固定按 文章 → 视频 → 图片 排列
-- 视频只认大型视频站并以 `site:` 定向检索，卡片标出来源平台
+### 涓枃
+- 鏂板璁剧疆銆屽垏鎹㈤〉闈㈡椂淇濈暀缁撴灉銆嶏紱銆岀患鍚堛€嶆澘鍧楀浐瀹氭寜 鏂囩珷 鈫?瑙嗛 鈫?鍥剧墖 鎺掑垪
+- 瑙嗛鍙澶у瀷瑙嗛绔欏苟浠?`site:` 瀹氬悜妫€绱紝鍗＄墖鏍囧嚭鏉ユ簮骞冲彴
 
 ### English
 - New "Keep results across panel switches" setting; the All board uses a fixed
-  Articles → Videos → Images order
+  Articles 鈫?Videos 鈫?Images order
 - Videos only come from major platforms and are searched with `site:`; cards show the source platform
 
 ## [1.3.0] - 2026-10-27
 
-### 中文
-- 三种搜索模式：答疑 / 百科 / 浏览；百科词条（档位可调）、浏览四板块与三指标权重、下一页去重
-- `curated_search` 工具支持 `mode` / `page`
+### 涓枃
+- 涓夌鎼滅储妯″紡锛氱瓟鐤?/ 鐧剧 / 娴忚锛涚櫨绉戣瘝鏉★紙妗ｄ綅鍙皟锛夈€佹祻瑙堝洓鏉垮潡涓庝笁鎸囨爣鏉冮噸銆佷笅涓€椤靛幓閲?- `curated_search` 宸ュ叿鏀寔 `mode` / `page`
 
 ### English
 - Three modes: Answers / Encyclopedia / Browse; encyclopedia entries with detail tiers, browse
@@ -236,8 +241,8 @@
 
 ## [1.2.0] - 2026-10-27
 
-### 中文
-- 改名「AI 搜索」；开始页精简；独立设置页（结果语言跟随 Harness）；搜索历史
+### 涓枃
+- 鏀瑰悕銆孉I 鎼滅储銆嶏紱寮€濮嬮〉绮剧畝锛涚嫭绔嬭缃〉锛堢粨鏋滆瑷€璺熼殢 Harness锛夛紱鎼滅储鍘嗗彶
 
 ### English
 - Renamed to "AI Search"; simplified start page; standalone settings page (result language follows
@@ -245,8 +250,8 @@
 
 ## [1.1.0] - 2026-10-27
 
-### 中文
-- 精读预算 6 秒、只读前 2 篇；补充追踪参数清理；摘要去重多语言版本
+### 涓枃
+- 绮捐棰勭畻 6 绉掋€佸彧璇诲墠 2 绡囷紱琛ュ厖杩借釜鍙傛暟娓呯悊锛涙憳瑕佸幓閲嶅璇█鐗堟湰
 
 ### English
 - 6-second reading budget, top-2 pages only; extra tracking params stripped; deduplicate language
@@ -254,9 +259,10 @@
 
 ## [1.0.0] - 2026-10-27
 
-### 中文
-- 首个版本：联网检索 → 广告过滤 → 精读 → AI 汇总排序；`curated_search` 工具；HTTP 接口
+### 涓枃
+- 棣栦釜鐗堟湰锛氳仈缃戞绱?鈫?骞垮憡杩囨护 鈫?绮捐 鈫?AI 姹囨€绘帓搴忥紱`curated_search` 宸ュ叿锛汬TTP 鎺ュ彛
 
 ### English
-- Initial release: retrieval → ad filtering → page reading → AI curation; `curated_search` tool;
+- Initial release: retrieval 鈫?ad filtering 鈫?page reading 鈫?AI curation; `curated_search` tool;
   HTTP API
+
