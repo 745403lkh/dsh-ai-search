@@ -1,5 +1,30 @@
 # 更新日志 / Changelog
 
+## [1.4.4-beta.2] - 2026-10-30
+
+### 中文
+
+**修复**
+- 官网识别改为**只认官网首页**：只把品牌官网首页（如 `www.baidu.com`）置顶并标「官方」；
+  官网域名下的其它页面（如 `ir.baidu.com` 股价页、`www.baidu.com/s?wd=` 搜索页）不再被当成官网
+- 保证第 1 页一定有官网首页：检索结果里没有首页时补一条首页条目；第 2 页起不重复
+
+**测试**
+- 6 个自测套件全部通过；新增「股价页不算官网」「搜索页不算官网」「补首页并置顶」等断言
+
+### English
+
+**Fixed**
+- Official-site recognition now only accepts the **official homepage** (e.g. `www.baidu.com`):
+  other pages on the official domain (the `ir.baidu.com` stock page, `www.baidu.com/s?wd=` search
+  pages) are no longer treated as the official site
+- Page 1 is guaranteed to contain the official homepage: if search results lack it, a homepage entry
+  is added (not repeated on later pages)
+
+**Testing**
+- All 6 test suites pass; added assertions for stock/search pages not counting as the homepage and
+  for the synthetic homepage being pinned
+
 ## [1.4.4-beta.1] - 2026-10-30
 
 ### 中文
