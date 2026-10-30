@@ -1,5 +1,64 @@
 # 更新日志 / Changelog
 
+## [1.4.4] - 2026-10-30
+
+正式版，汇总 1.4.4-beta.1 ~ beta.6 的全部改动。
+
+### 中文
+
+**官网识别**
+- 只认**官网首页**：`ir.baidu.com` 股价页、搜索结果页、文章页不算官网
+- 内置品牌从 50+ 扩充到 **258 个**（必应 / Steam / 米哈游 / 原神 / ChatGPT / 通义 等）
+- 检索结果没有官网首页时，第 1 页补一条首页；「综合」置顶「官方」分组
+
+**设置**
+- 设置侧栏「AI 搜索」换成**放大镜图标**（导航行标记 + CSS mask，跟随主题色）
+- 官网识别映射：**不限条数**，支持 **Excel（.xlsx）/ CSV 导入**
+- 新增「**自定义 API 和模型**」：
+  - 自定义搜索 API：Tavily / 博查 / SearXNG / Serper
+  - 自定义思考模型：OpenAI 兼容接口 + 思考强度（跟随模型 / 低 / 中 / 高）
+  - 默认都用 Harness 自带服务，打开开关才生效
+
+**浏览模式**
+- 图片板块像视频一样用 `site:` 定向多个图片站（Pexels / Pixabay / Unsplash / 花瓣 / 堆糖等）
+- 图片板块只放抓到缩略图的条目；没图的降级为文字条目，不出现空图占位
+- 卡片缩略图「有才显示」：直链图片直接用、YouTube / Vimeo / B 站按平台推导封面，
+  B 站接口失败会重试，首屏缺图的视频在页面渲染后逐条懒补
+- 视频封面尝试上限 12 条，缩略图预算提高到 12s，减少限流导致的「同站部分有图」
+
+**测试**
+- 7 个自测套件全部通过（libs / custom-api / stores / modes / search-service / client-render / routes）
+
+### English
+
+Stable release consolidating 1.4.4-beta.1 ~ beta.6.
+
+**Official sites**
+- Only the **official homepage** counts (`ir.baidu.com` stock pages, search result pages and article
+  pages are no longer treated as the official site)
+- Built-in brand map expanded from 50+ to **258 entries** (Bing / Steam / miHoYo / Genshin Impact /
+  ChatGPT / Tongyi and more)
+- Page 1 gets a synthetic homepage entry when missing; the All board pins an "Official" group
+
+**Settings**
+- The "AI Search" settings nav row now shows a **magnifier icon** (row marker + CSS mask, theme-aware)
+- Official-site mapping editor: **no entry limit**, **Excel (.xlsx) / CSV import**
+- New **"Custom API & models"**:
+  - Custom search API: Tavily / Bocha / SearXNG / Serper
+  - Custom thinking model: OpenAI-compatible endpoint + thinking effort (model default / low / medium / high)
+  - Harness services are used by default; each switch opts in
+
+**Browse**
+- Image board now targets multiple image sites with `site:` (Pexels / Pixabay / Unsplash / Huaban /
+  Duitang and more)
+- Only items with thumbnails stay in the image board; imageless ones degrade to text entries
+- Thumbnails only render when available: direct image URLs, derived covers for YouTube / Vimeo /
+  Bilibili (with retry), and lazy per-item cover enrichment after render for missing video covers
+- Video cover cap raised to 12, thumbnail budget to 12s to reduce rate-limit gaps
+
+**Testing**
+- All 7 test suites pass (libs / custom-api / stores / modes / search-service / client-render / routes)
+
 ## [1.4.4-beta.6] - 2026-10-30
 
 ### 中文
