@@ -201,6 +201,8 @@
         score: '评分 {n}',
         metaSources: '{n} 个来源',
         metaFetched: '精读 {n} 篇',
+        metaFetchedPartial: '精读 {read}/{attempted} 篇',
+        metaFetchedNone: '未读取正文（摘要基于检索片段）',
         metaRemoved: '过滤 {n} 条',
         metaElapsed: '用时 {s}s',
         metaModel: '{model}',
@@ -329,6 +331,8 @@
         score: 'Score {n}',
         metaSources: '{n} sources',
         metaFetched: '{n} pages read',
+        metaFetchedPartial: '{read}/{attempted} pages read',
+        metaFetchedNone: 'No page text read (summary from search snippets)',
         metaRemoved: '{n} filtered',
         metaElapsed: '{s}s',
         metaModel: '{model}',
@@ -1028,9 +1032,15 @@
         var result = props.result
         var t = props.t
         var stats = result.stats || {}
+        var fetched = typeof stats.fetched === 'number' ? stats.fetched : 0
+        var fetchAttempted = typeof stats.fetchAttempted === 'number' ? stats.fetchAttempted : 0
+        var fetchLabel = ''
+        if (fetchAttempted > 0 && fetched === 0) fetchLabel = t('metaFetchedNone')
+        else if (fetchAttempted > 0 && fetched < fetchAttempted) fetchLabel = format(t('metaFetchedPartial'), { read: fetched, attempted: fetchAttempted })
+        else fetchLabel = format(t('metaFetched'), { n: fetched })
         var items = [
           format(t('metaSources'), { n: stats.kept === undefined ? (result.sources || []).length : stats.kept }),
-          format(t('metaFetched'), { n: stats.fetched || 0 }),
+          fetchLabel,
           format(t('metaRemoved'), { n: stats.removed === undefined ? (result.removed || []).length : stats.removed }),
           format(t('metaElapsed'), { s: formatSeconds(stats.elapsedMs) }),
         ]

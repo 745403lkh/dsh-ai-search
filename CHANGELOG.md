@@ -1,5 +1,40 @@
 # 更新日志 / Changelog
 
+## [1.4.3-fix1] - 2026-10-30
+
+### 中文
+
+**修复**
+- `package.json` 补齐 `repository` / `homepage` / `bugs` / `license`（MIT）/ `keywords` / `author`，
+  npm 页面现在能链接回 GitHub 仓库
+- 答疑模式的「精读」口径：新增 `fetchAttempted` / `fetchFailed` / `curationBasis` 统计，
+  正文未读取或只读到部分时，界面与工具文案改为「精读 x/y 篇」或「未读取正文（摘要基于检索片段）」，
+  不再出现「精读 0 篇」却仍有摘要的误导
+- `curated_search` 工具补齐 `exclude` 参数并在浏览模式翻页时透传，翻页可以按 URL 去重
+  （此前只有客户端会传 exclude）
+- 浏览模式：「综合」改为全部候选（最多 36 条）按加权分排序，文章 / 视频 / 图片分栏是它的
+  子集（各最多 12 条），修复「分栏里出现综合中没有的条目」
+
+**测试**
+- 6 个自测套件全部通过；新增了分栏 ⊆ 综合、工具 exclude 透传、精读口径提示等断言
+
+### English
+
+**Fixed**
+- Added `repository` / `homepage` / `bugs` / `license` (MIT) / `keywords` / `author` to
+  `package.json`, so the npm page links back to the GitHub repository
+- Q&A "pages read" reporting: new `fetchAttempted` / `fetchFailed` / `curationBasis` stats; when page
+  text could not be read (or only partly), the UI and tool text now say "x/y pages read" or "no page
+  text read (summary from search snippets)" instead of a misleading "0 pages read" with a summary
+- `curated_search` now declares and forwards the `exclude` parameter for browse pagination, so pages
+  can be deduplicated by URL from the tool as well (previously only the UI passed it)
+- Browse: the All board is now the full candidate list (up to 36) sorted by weighted score, and the
+  article/video/image boards are subsets of it (up to 12 each), fixing board items missing from All
+
+**Testing**
+- All 6 test suites pass; added assertions for board-subset invariants, tool `exclude` forwarding and
+  the new pages-read wording
+
 ## [1.4.3] - 2026-10-29
 
 ### 中文
