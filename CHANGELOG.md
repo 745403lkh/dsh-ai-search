@@ -2,263 +2,49 @@
 
 ## [1.4.4] - 2026-10-30
 
-正式版，汇总 1.4.4-beta.1 ~ beta.6 的全部改动。
-
-### 中文
-
-**官网识别**
-- 只认**官网首页**：`ir.baidu.com` 股价页、搜索结果页、文章页不算官网
-- 内置品牌从 50+ 扩充到 **258 个**（必应 / Steam / 米哈游 / 原神 / ChatGPT / 通义 等）
-- 检索结果没有官网首页时，第 1 页补一条首页；「综合」置顶「官方」分组
-
-**设置**
-- 设置侧栏「AI 搜索」换成**放大镜图标**（导航行标记 + CSS mask，跟随主题色）
-- 官网识别映射：**不限条数**，支持 **Excel（.xlsx）/ CSV 导入**
-- 新增「**自定义 API 和模型**」：
-  - 自定义搜索 API：Tavily / 博查 / SearXNG / Serper
-  - 自定义思考模型：OpenAI 兼容接口 + 思考强度（跟随模型 / 低 / 中 / 高）
-  - 默认都用 Harness 自带服务，打开开关才生效
-
-**浏览模式**
-- 图片板块像视频一样用 `site:` 定向多个图片站（Pexels / Pixabay / Unsplash / 花瓣 / 堆糖等）
-- 图片板块只放抓到缩略图的条目；没图的降级为文字条目，不出现空图占位
-- 卡片缩略图「有才显示」：直链图片直接用、YouTube / Vimeo / B 站按平台推导封面，
-  B 站接口失败会重试，首屏缺图的视频在页面渲染后逐条懒补
-- 视频封面尝试上限 12 条，缩略图预算提高到 12s，减少限流导致的「同站部分有图」
-
-**测试**
-- 7 个自测套件全部通过（libs / custom-api / stores / modes / search-service / client-render / routes）
-
-### English
-
-Stable release consolidating 1.4.4-beta.1 ~ beta.6.
-
-**Official sites**
-- Only the **official homepage** counts (`ir.baidu.com` stock pages, search result pages and article
-  pages are no longer treated as the official site)
-- Built-in brand map expanded from 50+ to **258 entries** (Bing / Steam / miHoYo / Genshin Impact /
-  ChatGPT / Tongyi and more)
-- Page 1 gets a synthetic homepage entry when missing; the All board pins an "Official" group
-
-**Settings**
-- The "AI Search" settings nav row now shows a **magnifier icon** (row marker + CSS mask, theme-aware)
-- Official-site mapping editor: **no entry limit**, **Excel (.xlsx) / CSV import**
-- New **"Custom API & models"**:
-  - Custom search API: Tavily / Bocha / SearXNG / Serper
-  - Custom thinking model: OpenAI-compatible endpoint + thinking effort (model default / low / medium / high)
-  - Harness services are used by default; each switch opts in
-
-**Browse**
-- Image board now targets multiple image sites with `site:` (Pexels / Pixabay / Unsplash / Huaban /
-  Duitang and more)
-- Only items with thumbnails stay in the image board; imageless ones degrade to text entries
-- Thumbnails only render when available: direct image URLs, derived covers for YouTube / Vimeo /
-  Bilibili (with retry), and lazy per-item cover enrichment after render for missing video covers
-- Video cover cap raised to 12, thumbnail budget to 12s to reduce rate-limit gaps
-
-**Testing**
-- All 7 test suites pass (libs / custom-api / stores / modes / search-service / client-render / routes)
-
-## [1.4.4-beta.6] - 2026-10-30
-
 ### 中文
 
 **新增**
-- 设置侧栏里的「AI 搜索」现在有自己的**放大镜图标**（`settings.section` 契约不带 icon，
-  用导航行标记 + CSS mask 适配，颜色自动跟随主题）
-- 设置新增「**自定义 API 和模型**」：
-  - **自定义搜索 API**：可切换 Tavily / 博查（Bocha）/ SearXNG / Serper，填接口地址与 API Key，
-    替换默认联网搜索（正文抓取仍用 Harness）
-  - **自定义思考模型**：OpenAI 兼容接口（Base URL + API Key + 模型名），用于摘要 / 评分 / 百科生成，
-    支持**思考强度**（跟随模型 / 低 / 中 / 高）
-  - 两者默认都使用 **Harness 自带服务**，只有打开对应开关才生效；保存前会校验必填项
-
-**测试**
-- 7 个自测套件全部通过；新增自定义 API 归一化/校验、四种搜索平台请求映射、
-  思考模型 stream 适配、服务层接入（自定义搜索 + 自定义模型）等断言
-
-### English
-
-**Added**
-- The "AI Search" settings nav row now shows its own **magnifier icon** (the `settings.section`
-  contract has no icon field, so it marks its row and swaps the glyph with a CSS mask; colors follow
-  the theme)
-- New **"Custom API & models"** settings:
-  - **Custom search API**: switch to Tavily / Bocha / SearXNG / Serper with a custom endpoint and key,
-    replacing the default web search (page fetching still uses Harness)
-  - **Custom thinking model**: any OpenAI-compatible endpoint (base URL + key + model) used for
-    summaries / scoring / encyclopedia, with **thinking effort** (model default / low / medium / high)
-  - Both stay on Harness services by default and only apply when their switch is on; required fields
-    are validated before saving
-
-**Testing**
-- All 7 test suites pass; added assertions for custom-API normalization/validation, request mapping
-  for all four search platforms, thinking-model stream adaptation, and service-level integration
-
-## [1.4.4-beta.5] - 2026-10-30
-
-### 中文
-
-**修复**
-- 视频封面统一按站点获取，解决「同站视频有的有图、有的没图」：
-  - B 站走公开 view 接口取 `data.pic` 封面（不再只靠抓页面 HTML），接口失败自动重试
-  - Vimeo 直接用 vumbnail 生成封面
-  - YouTube 继续用 i.ytimg.com 推导
-- 视频封面抓取上限从 6 条提高到 12 条（与视频栏上限一致），缩略图总预算 5s → 12s，
-  并发限制 5 路，减少被搜索服务限流导致的「部分有图」
-- 首屏批量抓取后仍缺图的视频，浏览页渲染完会**逐条懒补封面**（Host 接口 + 重试；
-  B 站再兜底用浏览器直连公开接口），补齐后自动更新卡片
-
-**测试**
-- 6 个自测套件全部通过；新增 B 站接口封面、Vimeo 推导、8 条同站视频全部有封面、
-  `/cover` 补抓接口等断言
-
-### English
-
-**Fixed**
-- Video covers are now resolved per platform, fixing "some videos on the same site have covers
-  while others don't":
-  - Bilibili covers come from the public view API (`data.pic`) instead of only scraping HTML,
-    with automatic retry
-  - Vimeo covers are derived via vumbnail
-  - YouTube keeps using i.ytimg.com
-- Video cover target cap raised from 6 to 12 (same as the video board limit), thumbnail budget from
-  5s to 12s and concurrency limited to 5, so rate limiting no longer leaves half the videos empty
-- Videos still missing a cover after the first batch are lazily enriched after the page renders
-  (host `/cover` endpoint with retries; Bilibili additionally falls back to the browser calling the
-  public API directly), updating cards as covers arrive
-
-**Testing**
-- All 6 test suites pass; added assertions for Bilibili API covers, Vimeo derivation, 8 videos on one
-  page all getting covers, and the `/cover` enrichment endpoint
-
-## [1.4.4-beta.4] - 2026-10-30
-
-### 中文
-
-**新增**
-- 官网识别映射**取消数量上限**，并支持从 **Excel（.xlsx）/ CSV** 导入：表格列为
-  品牌名 | 别名（逗号分隔）| 官网首页，导入时自动去重、合并进现有映射
-- 浏览模式**图片板块多源检索**：像视频一样用 `site:` 定向图片站（Unsplash / Pexels / Pixabay /
-  花瓣 / 堆糖 等按页轮换），图片类型只认图片站，减少普通网页混入
+- 浏览模式官网识别：搜索品牌词时只把**官网首页**置顶并标「官方」。内置 258 个品牌（必应 / Steam / 米哈游 / 原神 / 崩坏系列 / ChatGPT / Claude / 通义 / 文心一言 / 豆包 / Kimi / 汽车 / 银行 / 餐饮 / 零售 等），官网域名下的其它页面（如 `ir.baidu.com` 股价页、搜索页、文章页）不算官网；结果里没有官网首页时第 1 页补一条；「综合」新增「官方」置顶分组；非品牌词不会误标
+- 设置新增「官网识别映射」：品牌名 + 别名（逗号分隔）+ 官网首页 URL，不限条数，支持 Excel（.xlsx）/ CSV 导入，自定义映射优先于内置表
+- 设置新增「自定义 API 和模型」：自定义搜索 API（Tavily / 博查 / SearXNG / Serper）与自定义思考模型（OpenAI 兼容接口 + 思考强度：跟随模型 / 低 / 中 / 高）；默认都使用 Harness 自带服务，打开开关才生效
+- 设置侧栏「AI 搜索」使用自己的放大镜图标（此前是默认齿轮）
 
 **改进**
-- **缩略图有才显示**：拿不到图的卡片不再显示空图片框，改为纯文字卡片；
-  图片 URL 直链直接当缩略图（省一次抓取），YouTube 仍自动推导封面，其余抓 `og:image`
-- **图片板块只放有图的条目**：没抓到缩略图的图片条目降级为普通条目（文字展示），不再出现空图占位
-
-**测试**
-- 6 个自测套件全部通过；新增「无图条目降级」「直链图片不抓取」「图片栏只含有图条目」
-  「CSV/XLSX 导入解析」「映射不限量」等断言
-
-### English
-
-**Added**
-- The official-site mapping editor now has **no entry limit** and supports **Excel (.xlsx) / CSV
-  import**: columns are brand | aliases (comma separated) | homepage; duplicates are merged into the
-  existing mapping
-- Browse **image board now searches multiple image sites** with `site:` targeting (Unsplash / Pexels /
-  Pixabay / Huaban / Duitang, rotated per page) and only accepts image sites for the image kind
-
-**Changed**
-- **Thumbnails are only rendered when available**: cards without a thumbnail no longer show an empty
-  image box and fall back to a text-only card; direct image URLs are used as thumbnails without an
-  extra fetch, YouTube covers are derived, others use `og:image`
-- **The image board only contains items with images**: image items without a thumbnail are degraded
-  to regular (text) items instead of leaving empty placeholders
-
-**Testing**
-- All 6 test suites pass; added assertions for imageless-item degradation, direct image URLs not
-  being fetched, image board filtering, CSV/XLSX import parsing, and unlimited mapping entries
-
-## [1.4.4-beta.3] - 2026-10-30
-
-### 中文
-
-**新增**
-- 内置官网映射从 50+ 扩充到 **200+ 品牌**：新增必应、Steam、Epic、米哈游、原神、崩坏系列、
-  任天堂/PlayStation/Xbox、腾讯云/阿里云/华为云、ChatGPT/Claude/Gemini/通义/文心一言/豆包/Kimi、
-  汽车/银行/餐饮/零售/媒体/教育等常见品牌
-- 设置里新增**「官网识别映射」编辑器**：可自定义品牌名、别名（逗号分隔）与官网首页 URL，
-  可添加多个、可删除；自定义映射优先于内置表，保存后立即生效
-- 浏览模式的官网识别现在会读取设置里的自定义映射（Host 侧每次检索实时使用）
-
-**测试**
-- 6 个自测套件全部通过；新增必应/Steam/米哈游/原神映射、自定义映射优先、设置保存/非法项/清空、
-  自定义映射接入浏览模式等断言
-
-### English
-
-**Added**
-- Built-in official-site map expanded from 50+ to **200+ brands**: Bing, Steam, Epic, miHoYo,
-  Genshin Impact, Honkai series, Nintendo/PlayStation/Xbox, Tencent Cloud/Alibaba Cloud/Huawei Cloud,
-  ChatGPT/Claude/Gemini/Tongyi/ERNIE/Doubao/Kimi, plus auto/bank/food/retail/media/education brands
-- New **"Official-site mappings" editor** in Settings: add a brand name, comma-separated aliases and
-  an official homepage URL; entries can be added or deleted and take priority over the built-in map
-  immediately after saving
-- Browse-mode official recognition now reads the custom mappings from settings on every search
-
-**Testing**
-- All 6 test suites pass; added assertions for Bing/Steam/miHoYo/Genshin mappings, custom-map
-  priority, settings validation/clear, and custom mappings being applied in browse mode
-
-## [1.4.4-beta.2] - 2026-10-30
-
-### 中文
+- 浏览模式图片板块改为多源检索：用 `site:` 定向 Pexels / Pixabay / Unsplash / 花瓣 / 堆糖 / 500px / Flickr 等图片站并按页轮换；图片类型只认图片站
+- 图片板块只放抓到缩略图的条目，无图条目降级为文字条目，不再出现空图占位
+- 卡片缩略图改为「有才显示」：拿不到图不再显示空图片框，直接纯文字卡片；图片直链直接当缩略图
+- 视频封面按平台获取：YouTube 用 i.ytimg.com、Vimeo 用 vumbnail、B 站走公开 view 接口并自动重试；首屏没拿到封面的视频在页面渲染后逐条懒补（Host `/cover` 接口 + B 站浏览器直连兜底）
+- 视频封面尝试上限 6 → 12 条，缩略图总预算 5s → 12s，并发限制 5 路，减少搜索服务限流导致「同站视频有的有图、有的没图」
 
 **修复**
-- 官网识别改为**只认官网首页**：只把品牌官网首页（如 `www.baidu.com`）置顶并标「官方」；
-  官网域名下的其它页面（如 `ir.baidu.com` 股价页、`www.baidu.com/s?wd=` 搜索页）不再被当成官网
-- 保证第 1 页一定有官网首页：检索结果里没有首页时补一条首页条目；第 2 页起不重复
+- 图片板块空图占位：无图条目不再进入图片板块，也不显示空图片框
+- 同站视频封面不一致：不再只推导 YouTube 封面并抓少量 `og:image`，改为按平台统一获取并在渲染后补齐
 
 **测试**
-- 6 个自测套件全部通过；新增「股价页不算官网」「搜索页不算官网」「补首页并置顶」等断言
-
-### English
-
-**Fixed**
-- Official-site recognition now only accepts the **official homepage** (e.g. `www.baidu.com`):
-  other pages on the official domain (the `ir.baidu.com` stock page, `www.baidu.com/s?wd=` search
-  pages) are no longer treated as the official site
-- Page 1 is guaranteed to contain the official homepage: if search results lack it, a homepage entry
-  is added (not repeated on later pages)
-
-**Testing**
-- All 6 test suites pass; added assertions for stock/search pages not counting as the homepage and
-  for the synthetic homepage being pinned
-
-## [1.4.4-beta.1] - 2026-10-30
-
-### 中文
-
-**新增**
-- 浏览模式**官网识别**：内置常见品牌 → 官方域名映射（微信、淘宝、京东、抖音、百度、DeepSeek、
-  Google、微软等 50+ 品牌），品牌词搜索时官网结果置顶并标「官方」
-- 检索结果里没有官网时，第 1 页自动补一条官网首页（第 2 页起不重复），卡片与工具输出都带官方标识
-- 「综合」板块新增「官方」置顶分组；分栏内官网条目同样置顶
-
-**改进**
-- `curated_search` 工具输出新增 `browse.items[].official` 字段，渲染为「· 官方」
-
-**测试**
-- 6 个自测套件全部通过；新增官网映射、子域名识别、置顶排序、补官网首页、非品牌词不误标等断言
+- 7 个自测套件全部通过；新增官网识别、自定义 API、图片/视频缩略图、设置校验等断言
 
 ### English
 
 **Added**
-- Browse mode **official-site recognition**: a curated brand → official-domain map (WeChat, Taobao,
-  JD, Douyin, Baidu, DeepSeek, Google, Microsoft and 50+ more). Brand queries pin the official site
-  first and badge it "Official"
-- When search results contain no official site, page 1 adds a synthetic official homepage entry
-  (not repeated on later pages); cards and tool output both show the official marker
-- The All board renders a pinned "Official" group first; official items are also pinned inside boards
+- Official-site recognition in browse mode: brand queries pin the **official homepage** and badge it "Official". Ships with 258 built-in brands (Bing / Steam / miHoYo / Genshin Impact / Honkai series / ChatGPT / Claude / Tongyi / ERNIE / Doubao / Kimi / auto / banks / food / retail and more). Other pages on the official domain (the `ir.baidu.com` stock page, search pages, article pages) do not count; when results lack the homepage, page 1 adds an entry; the All board gains a pinned "Official" group; non-brand queries are never mislabelled
+- New "Official-site mappings" setting: brand name + comma-separated aliases + official homepage URL, no entry limit, with Excel (.xlsx) / CSV import; custom entries take precedence over the built-in map
+- New "Custom API & models" setting: custom search API (Tavily / Bocha / SearXNG / Serper) and a custom OpenAI-compatible thinking model with thinking effort (model default / low / medium / high); both use Harness services by default and only apply when switched on
+- The "AI Search" settings nav row now uses its own magnifier icon (previously the generic gear)
 
 **Changed**
-- `curated_search` output gains `browse.items[].official`, rendered as "· 官方"/"· Official"
+- The browse image board now searches multiple image sites with `site:` (Pexels / Pixabay / Unsplash / Huaban / Duitang / 500px / Flickr, rotated per page); only image sites count as images
+- Only items with thumbnails stay in the image board; imageless items degrade to text entries, so empty placeholders are gone
+- Thumbnails now render only when available: cards without an image no longer show an empty box and fall back to text; direct image URLs are used as thumbnails
+- Video covers are resolved per platform: YouTube via i.ytimg.com, Vimeo via vumbnail, Bilibili via the public view API with retries; videos still missing a cover after the first batch are lazily enriched after render (host `/cover` endpoint with a Bilibili browser fallback)
+- Video cover cap raised 6 → 12, thumbnail budget 5s → 12s with concurrency limited to 5, reducing "some videos on the same site have covers while others don't"
+
+**Fixed**
+- Empty image placeholders in the image board: imageless items are no longer placed there and no empty box is rendered
+- Inconsistent video covers on the same site: covers are now resolved per platform instead of only deriving YouTube covers and fetching a few `og:image` values, with lazy enrichment after render
 
 **Testing**
-- All 6 test suites pass; added assertions for the brand map, subdomain recognition, pinning order,
-  synthetic official homepage, and no false positives on non-brand queries
+- All 7 test suites pass; assertions added for official-site recognition, custom APIs, image/video thumbnails and settings validation
 
 ## [1.4.3-fix1] - 2026-10-30
 
