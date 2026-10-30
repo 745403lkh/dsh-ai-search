@@ -243,6 +243,8 @@
         emptyBoard: '这个板块暂时没有结果，可以继续下一页。',
         browseNoResults: '没有找到结果，可以继续下一页或换个问法。',
         browseHint: '已剔除竞价/推广结果',
+        officialLabel: '官方',
+        officialSectionTitle: '官方',
         groupHeading: '{name} · {n}',
         settingsTitle: 'AI 搜索',
         settingsLead: 'AI 搜索的偏好设置，修改后立即生效。',
@@ -373,6 +375,8 @@
         emptyBoard: 'Nothing in this section yet — try the next page.',
         browseNoResults: 'No results — try the next page or another wording.',
         browseHint: 'Bid/promoted results excluded',
+        officialLabel: 'Official',
+        officialSectionTitle: 'Official',
         groupHeading: '{name} · {n}',
         settingsTitle: 'AI Search',
         settingsLead: 'Preferences for AI Search; changes apply immediately.',
@@ -547,6 +551,7 @@
         '.ais-feed-title{font-size:15px;line-height:22px;font-weight:600;color:var(--dsw-alias-label-primary);text-decoration:none;word-break:break-word}',
         '.ais-feed-title:hover{color:var(--dsw-alias-brand-primary);text-decoration:underline}',
         '.ais-kind{font-size:10px;line-height:16px;padding:1px 7px;border-radius:999px;color:var(--dsw-alias-brand-primary);border:1px solid color-mix(in srgb,var(--dsw-alias-brand-primary) 32%,transparent)}',
+        '.ais-official{flex:none;font-size:10px;line-height:16px;padding:1px 7px;border-radius:999px;font-weight:600;color:var(--dsw-alias-brand-primary);border:1px solid color-mix(in srgb,var(--dsw-alias-brand-primary) 48%,transparent);background:color-mix(in srgb,var(--dsw-alias-brand-primary) 12%,transparent)}',
         '.ais-feed-snippet{margin:0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}',
         '.ais-metrics{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}',
         '.ais-metrics-total{margin-left:auto;font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary)}',
@@ -1385,6 +1390,7 @@
               { className: 'ais-feed-top' },
               h('a', linkProps('ais-feed-title', item.url, item.url), item.title),
               h('span', { className: 'ais-kind' }, item.kind === 'video' && item.sourcePlatform ? t(kindKey) + ' · ' + item.sourcePlatform : t(kindKey)),
+              item.official === true ? h('span', { className: 'ais-official' }, t('officialLabel')) : null,
               h('span', { className: 'ais-domain', title: item.url }, item.domain),
             ),
             item.snippet ? h('p', { className: 'ais-feed-snippet' }, item.snippet) : null,
@@ -1409,7 +1415,13 @@
             'div',
             { className: 'ais-image-info' },
             h('span', { className: 'ais-image-title' }, item.title),
-            h('span', { className: 'ais-image-meta' }, h('span', null, item.domain), h('span', null, format(t('totalScore'), { n: item.score }))),
+            h(
+              'span',
+              { className: 'ais-image-meta' },
+              h('span', null, item.domain),
+              item.official === true ? h('span', { className: 'ais-official' }, t('officialLabel')) : null,
+              h('span', null, format(t('totalScore'), { n: item.score })),
+            ),
           ),
         )
       }
@@ -1459,40 +1471,66 @@
           )
         }
         if (board === 'all') {
+          var officialItems = items.filter(function (item) {
+            return item.official === true
+          })
+          var restItems = items.filter(function (item) {
+            return item.official !== true
+          })
+          var groups = ['article', 'video', 'image'].map(function (kind) {
+            var group = restItems.filter(function (item) {
+              return item.kind === kind
+            })
+            if (group.length === 0) return null
+            return h(
+              'section',
+              { className: 'ais-group', key: 'group-' + kind },
+              h(
+                'div',
+                { className: 'ais-group-head' },
+                h('span', { className: 'ais-group-title' }, t(KIND_LABELS[kind])),
+                h('span', { className: 'ais-group-count' }, format(t('groupHeading'), { name: '', n: group.length }).replace(/^\s*·\s*/, '')),
+              ),
+              kind === 'image'
+                ? h(
+                    'div',
+                    { className: 'ais-image-grid' },
+                    group.map(function (item, index) {
+                      return h(ImageCard, { key: item.url + '#' + index, t: t, item: item })
+                    }),
+                  )
+                : h(
+                    'div',
+                    { className: 'ais-feed' },
+                    group.map(function (item, index) {
+                      return h(FeedCard, { key: item.url + '#' + index, t: t, item: item })
+                    }),
+                  ),
+            )
+          })
           return h(
             React.Fragment,
             null,
-            ['article', 'video', 'image'].map(function (kind) {
-              var group = items.filter(function (item) {
-                return item.kind === kind
-              })
-              if (group.length === 0) return null
-              return h(
-                'section',
-                { className: 'ais-group', key: 'group-' + kind },
-                h(
-                  'div',
-                  { className: 'ais-group-head' },
-                  h('span', { className: 'ais-group-title' }, t(KIND_LABELS[kind])),
-                  h('span', { className: 'ais-group-count' }, format(t('groupHeading'), { name: '', n: group.length }).replace(/^\s*·\s*/, '')),
-                ),
-                kind === 'image'
-                  ? h(
-                      'div',
-                      { className: 'ais-image-grid' },
-                      group.map(function (item, index) {
-                        return h(ImageCard, { key: item.url + '#' + index, t: t, item: item })
-                      }),
-                    )
-                  : h(
-                      'div',
-                      { className: 'ais-feed' },
-                      group.map(function (item, index) {
-                        return h(FeedCard, { key: item.url + '#' + index, t: t, item: item })
-                      }),
-                    ),
-              )
-            }),
+            officialItems.length > 0
+              ? h(
+                  'section',
+                  { className: 'ais-group', key: 'group-official' },
+                  h(
+                    'div',
+                    { className: 'ais-group-head' },
+                    h('span', { className: 'ais-group-title' }, t('officialSectionTitle')),
+                    h('span', { className: 'ais-group-count' }, String(officialItems.length)),
+                  ),
+                  h(
+                    'div',
+                    { className: 'ais-feed' },
+                    officialItems.map(function (item, index) {
+                      return h(FeedCard, { key: item.url + '#' + index, t: t, item: item })
+                    }),
+                  ),
+                )
+              : null,
+            groups,
           )
         }
         return h(

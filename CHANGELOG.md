@@ -1,5 +1,38 @@
 # 更新日志 / Changelog
 
+## [1.4.4-beta.1] - 2026-10-30
+
+### 中文
+
+**新增**
+- 浏览模式**官网识别**：内置常见品牌 → 官方域名映射（微信、淘宝、京东、抖音、百度、DeepSeek、
+  Google、微软等 50+ 品牌），品牌词搜索时官网结果置顶并标「官方」
+- 检索结果里没有官网时，第 1 页自动补一条官网首页（第 2 页起不重复），卡片与工具输出都带官方标识
+- 「综合」板块新增「官方」置顶分组；分栏内官网条目同样置顶
+
+**改进**
+- `curated_search` 工具输出新增 `browse.items[].official` 字段，渲染为「· 官方」
+
+**测试**
+- 6 个自测套件全部通过；新增官网映射、子域名识别、置顶排序、补官网首页、非品牌词不误标等断言
+
+### English
+
+**Added**
+- Browse mode **official-site recognition**: a curated brand → official-domain map (WeChat, Taobao,
+  JD, Douyin, Baidu, DeepSeek, Google, Microsoft and 50+ more). Brand queries pin the official site
+  first and badge it "Official"
+- When search results contain no official site, page 1 adds a synthetic official homepage entry
+  (not repeated on later pages); cards and tool output both show the official marker
+- The All board renders a pinned "Official" group first; official items are also pinned inside boards
+
+**Changed**
+- `curated_search` output gains `browse.items[].official`, rendered as "· 官方"/"· Official"
+
+**Testing**
+- All 6 test suites pass; added assertions for the brand map, subdomain recognition, pinning order,
+  synthetic official homepage, and no false positives on non-brand queries
+
 ## [1.4.3-fix1] - 2026-10-30
 
 ### 中文
