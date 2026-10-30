@@ -1,5 +1,36 @@
 # 更新日志 / Changelog
 
+## [1.4.4-beta.3] - 2026-10-30
+
+### 中文
+
+**新增**
+- 内置官网映射从 50+ 扩充到 **200+ 品牌**：新增必应、Steam、Epic、米哈游、原神、崩坏系列、
+  任天堂/PlayStation/Xbox、腾讯云/阿里云/华为云、ChatGPT/Claude/Gemini/通义/文心一言/豆包/Kimi、
+  汽车/银行/餐饮/零售/媒体/教育等常见品牌
+- 设置里新增**「官网识别映射」编辑器**：可自定义品牌名、别名（逗号分隔）与官网首页 URL，
+  可添加多个、可删除；自定义映射优先于内置表，保存后立即生效
+- 浏览模式的官网识别现在会读取设置里的自定义映射（Host 侧每次检索实时使用）
+
+**测试**
+- 6 个自测套件全部通过；新增必应/Steam/米哈游/原神映射、自定义映射优先、设置保存/非法项/清空、
+  自定义映射接入浏览模式等断言
+
+### English
+
+**Added**
+- Built-in official-site map expanded from 50+ to **200+ brands**: Bing, Steam, Epic, miHoYo,
+  Genshin Impact, Honkai series, Nintendo/PlayStation/Xbox, Tencent Cloud/Alibaba Cloud/Huawei Cloud,
+  ChatGPT/Claude/Gemini/Tongyi/ERNIE/Doubao/Kimi, plus auto/bank/food/retail/media/education brands
+- New **"Official-site mappings" editor** in Settings: add a brand name, comma-separated aliases and
+  an official homepage URL; entries can be added or deleted and take priority over the built-in map
+  immediately after saving
+- Browse-mode official recognition now reads the custom mappings from settings on every search
+
+**Testing**
+- All 6 test suites pass; added assertions for Bing/Steam/miHoYo/Genshin mappings, custom-map
+  priority, settings validation/clear, and custom mappings being applied in browse mode
+
 ## [1.4.4-beta.2] - 2026-10-30
 
 ### 中文

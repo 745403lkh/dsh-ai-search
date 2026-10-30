@@ -285,6 +285,15 @@
         customEngineEmpty: '还没有自定义搜索引擎',
         customEngineDelete: '删除',
         customEngineInvalid: '请填写名称，并在网址中用 *#*#*#* 代替搜索词',
+        officialMapLabel: '官网识别映射',
+        officialMapHint: '自定义品牌 → 官网首页；品牌词搜索时官网会置顶并标「官方」。别名用逗号分隔。',
+        officialMapEmpty: '还没有自定义官网映射',
+        officialMapNamePlaceholder: '品牌名，例如 米哈游',
+        officialMapAliasesPlaceholder: '别名，逗号分隔，例如 米哈游,miHoYo',
+        officialMapHomepagePlaceholder: '官网首页，例如 https://www.mihoyo.com/',
+        officialMapAdd: '添加',
+        officialMapDelete: '删除',
+        officialMapInvalid: '请填写品牌名，并给出合法的 http(s) 官网首页',
         betterSidebarTabTitle: 'AI 搜索',
         betterSidebarTabDesc: '搜索网页并整理结果',
         betterSidebarLabel: '适配更好的侧边栏',
@@ -417,6 +426,15 @@
         customEngineEmpty: 'No custom search engines yet',
         customEngineDelete: 'Delete',
         customEngineInvalid: 'Enter a name and use *#*#*#* in the URL as the query placeholder',
+        officialMapLabel: 'Official-site mappings',
+        officialMapHint: 'Custom brand → official homepage; the homepage is pinned and badged "Official" for brand queries. Separate aliases with commas.',
+        officialMapEmpty: 'No custom official-site mappings yet',
+        officialMapNamePlaceholder: 'Brand, e.g. miHoYo',
+        officialMapAliasesPlaceholder: 'Aliases, comma separated, e.g. miHoYo,hoyoverse',
+        officialMapHomepagePlaceholder: 'Homepage, e.g. https://www.mihoyo.com/',
+        officialMapAdd: 'Add',
+        officialMapDelete: 'Delete',
+        officialMapInvalid: 'Enter a brand name and a valid http(s) homepage URL',
         betterSidebarTabTitle: 'AI Search',
         betterSidebarTabDesc: 'Search the web with AI curation',
         betterSidebarLabel: 'Better Sidebar integration',
@@ -654,6 +672,7 @@
         '.ais-custom-list{display:flex;flex-direction:column;gap:6px}',
         '.ais-custom-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);min-width:0}',
         '.ais-custom-name{flex:none;font-size:12px;line-height:18px;font-weight:600}',
+        '.ais-custom-alias{flex:none;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-secondary)}',
         '.ais-custom-url{flex:1;min-width:0;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
         '.ais-custom-form{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}',
         '.ais-custom-input{box-sizing:border-box;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:18px;min-width:110px;flex:1 1 130px}',
@@ -2216,6 +2235,11 @@
           customName: '',
           customUrl: '',
           customError: '',
+          customOfficialSites: [],
+          customSiteName: '',
+          customSiteAliases: '',
+          customSiteHomepage: '',
+          customSiteError: '',
           saving: false,
           saved: false,
           error: '',
@@ -2254,6 +2278,7 @@
                   openLinksInSidebar: next.openLinksInSidebar !== false,
                   defaultEngine: next.defaultEngine || 'ai',
                   customEngines: Array.isArray(next.customEngines) ? next.customEngines : [],
+                  customOfficialSites: Array.isArray(next.customOfficialSites) ? next.customOfficialSites : [],
                 }
               })
             })
@@ -2298,6 +2323,9 @@
                 if (payload && payload.settings) {
                   next.defaultEngine = payload.settings.defaultEngine || previous.defaultEngine
                   next.customEngines = Array.isArray(payload.settings.customEngines) ? payload.settings.customEngines : previous.customEngines
+                  next.customOfficialSites = Array.isArray(payload.settings.customOfficialSites)
+                    ? payload.settings.customOfficialSites
+                    : previous.customOfficialSites
                 }
                 return next
               })
@@ -2424,6 +2452,60 @@
             save(patch)
           },
           [settings.customEngines, settings.defaultEngine, save],
+        )
+
+        var addOfficialSite = React.useCallback(
+          function () {
+            var name = String(settings.customSiteName || '').trim()
+            var homepage = String(settings.customSiteHomepage || '').trim()
+            var aliases = String(settings.customSiteAliases || '')
+              .split(/[,，、;；]/)
+              .map(function (entry) {
+                return entry.trim()
+              })
+              .filter(function (entry) {
+                return entry !== ''
+              })
+            var validHomepage = false
+            try {
+              var parsed = new URL(homepage)
+              validHomepage = parsed.protocol === 'http:' || parsed.protocol === 'https:'
+            } catch (parseError) {
+              validHomepage = false
+            }
+            if (name === '' || !validHomepage) {
+              setSettings(function (previous) {
+                return { ...previous, customSiteError: t('officialMapInvalid') }
+              })
+              return
+            }
+            var nextList = (settings.customOfficialSites || []).concat([{ name: name, aliases: aliases, homepage: homepage }])
+            setSettings(function (previous) {
+              return {
+                ...previous,
+                customOfficialSites: nextList,
+                customSiteName: '',
+                customSiteAliases: '',
+                customSiteHomepage: '',
+                customSiteError: '',
+              }
+            })
+            save({ customOfficialSites: nextList })
+          },
+          [settings.customOfficialSites, settings.customSiteName, settings.customSiteAliases, settings.customSiteHomepage, save, t],
+        )
+
+        var removeOfficialSite = React.useCallback(
+          function (homepage) {
+            var nextList = (settings.customOfficialSites || []).filter(function (entry) {
+              return entry.homepage !== homepage
+            })
+            setSettings(function (previous) {
+              return { ...previous, customOfficialSites: nextList }
+            })
+            save({ customOfficialSites: nextList })
+          },
+          [settings.customOfficialSites, save],
         )
 
         React.useEffect(
@@ -2742,6 +2824,77 @@
                   h('button', { type: 'button', className: 'ais-pref-button', onClick: addCustomEngine }, t('customEngineAdd')),
                 ),
                 settings.customError !== '' ? h('p', { className: 'ais-pref-hint ais-pref-status-error' }, settings.customError) : null,
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
+                h('div', { className: 'ais-pref-label' }, t('officialMapLabel')),
+                h('p', { className: 'ais-pref-hint' }, t('officialMapHint')),
+                (settings.customOfficialSites || []).length === 0
+                  ? h('p', { className: 'ais-pref-hint' }, t('officialMapEmpty'))
+                  : h(
+                      'div',
+                      { className: 'ais-custom-list' },
+                      (settings.customOfficialSites || []).map(function (site) {
+                        return h(
+                          'div',
+                          { className: 'ais-custom-row', key: site.homepage },
+                          h('span', { className: 'ais-custom-name' }, site.name),
+                          h('span', { className: 'ais-custom-alias', title: (site.aliases || []).join(', ') }, (site.aliases || []).join('、')),
+                          h('span', { className: 'ais-custom-url', title: site.homepage }, site.homepage),
+                          h(
+                            'button',
+                            { type: 'button', className: 'ais-pref-button', onClick: function () { removeOfficialSite(site.homepage) } },
+                            t('officialMapDelete'),
+                          ),
+                        )
+                      }),
+                    ),
+                h(
+                  'div',
+                  { className: 'ais-custom-form' },
+                  h('input', {
+                    className: 'ais-custom-input',
+                    type: 'text',
+                    value: settings.customSiteName,
+                    placeholder: t('officialMapNamePlaceholder'),
+                    'aria-label': t('officialMapNamePlaceholder'),
+                    onChange: function (event) {
+                      var value = event.target.value
+                      setSettings(function (previous) {
+                        return { ...previous, customSiteName: value }
+                      })
+                    },
+                  }),
+                  h('input', {
+                    className: 'ais-custom-input',
+                    type: 'text',
+                    value: settings.customSiteAliases,
+                    placeholder: t('officialMapAliasesPlaceholder'),
+                    'aria-label': t('officialMapAliasesPlaceholder'),
+                    onChange: function (event) {
+                      var value = event.target.value
+                      setSettings(function (previous) {
+                        return { ...previous, customSiteAliases: value }
+                      })
+                    },
+                  }),
+                  h('input', {
+                    className: 'ais-custom-input ais-custom-input-url',
+                    type: 'text',
+                    value: settings.customSiteHomepage,
+                    placeholder: t('officialMapHomepagePlaceholder'),
+                    'aria-label': t('officialMapHomepagePlaceholder'),
+                    onChange: function (event) {
+                      var value = event.target.value
+                      setSettings(function (previous) {
+                        return { ...previous, customSiteHomepage: value }
+                      })
+                    },
+                  }),
+                  h('button', { type: 'button', className: 'ais-pref-button', onClick: addOfficialSite }, t('officialMapAdd')),
+                ),
+                settings.customSiteError !== '' ? h('p', { className: 'ais-pref-hint ais-pref-status-error' }, settings.customSiteError) : null,
               ),
               h(
                 'div',
