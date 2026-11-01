@@ -219,12 +219,12 @@
         historyFilterAll: '全部',
         historyFilterPage: '页面',
         historyFilterTool: 'AI 工具',
-        historyFilterUnknown: '旧记录',
         historySourcePage: '页面',
         historySourceTool: 'AI',
-        historySourceUnknown: '未知',
+        historySourceLegacy: '历史',
         historyEmptyFilter: '该来源暂无记录',
-        historyCounts: '页面 {page} · AI 工具 {tool} · 其他 {unknown}',
+        historyCounts: '页面 {page} · AI 工具 {tool}',
+        historyCountsLegacy: '{base} · 历史 {legacy}',
         detailBrief: '简明',
         detailStandard: '标准',
         detailDetailed: '详尽',
@@ -398,12 +398,12 @@
         historyFilterAll: 'All',
         historyFilterPage: 'Page',
         historyFilterTool: 'AI tool',
-        historyFilterUnknown: 'Legacy',
         historySourcePage: 'Page',
         historySourceTool: 'AI',
-        historySourceUnknown: 'Unknown',
+        historySourceLegacy: 'Legacy',
         historyEmptyFilter: 'No entries from this source',
-        historyCounts: 'Page {page} · AI tool {tool} · Other {unknown}',
+        historyCounts: 'Page {page} · AI tool {tool}',
+        historyCountsLegacy: '{base} · legacy {legacy}',
         detailBrief: 'Brief',
         detailStandard: 'Standard',
         detailDetailed: 'Detailed',
@@ -576,6 +576,7 @@
         '.ais-history-source-page{background:color-mix(in srgb,var(--dsw-alias-brand-primary) 14%,transparent);color:var(--dsw-alias-brand-primary)}',
         '.ais-history-source-tool{background:color-mix(in srgb,#a855f7 16%,transparent);color:color-mix(in srgb,#a855f7 78%,var(--dsw-alias-label-primary))}',
         '.ais-history-source-unknown{opacity:.85}',
+        '.ais-history-source-legacy{opacity:.85}',
         '.ais-hero-chips .ais-chip{display:inline-flex;align-items:center}',
         '.ais-history-empty{margin:0}',
         '.ais-modes{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1)}',
@@ -2248,17 +2249,25 @@
         )
 
         var suggestions = SUGGESTIONS[lang] || SUGGESTIONS.zh
-        var visibleHistory = historyItems.filter(function (entry) {
-          if (historyFilter === 'all') return true
-          var source = entry && (entry.source === 'page' || entry.source === 'tool') ? entry.source : 'unknown'
-          return source === historyFilter
-        })
         function historySourceOf(entry) {
-          return entry && (entry.source === 'page' || entry.source === 'tool') ? entry.source : 'unknown'
+          return entry && (entry.source === 'page' || entry.source === 'tool') ? entry.source : 'legacy'
         }
         function historySourceKey(source) {
-          return source === 'page' ? 'historySourcePage' : source === 'tool' ? 'historySourceTool' : 'historySourceUnknown'
+          return source === 'page' ? 'historySourcePage' : source === 'tool' ? 'historySourceTool' : 'historySourceLegacy'
         }
+        var historyPageCount = historyItems.filter(function (entry) {
+          return historySourceOf(entry) === 'page'
+        }).length
+        var historyToolCount = historyItems.filter(function (entry) {
+          return historySourceOf(entry) === 'tool'
+        }).length
+        var historyFilterOptions = [['all', 'historyFilterAll']]
+        if (historyPageCount > 0) historyFilterOptions.push(['page', 'historyFilterPage'])
+        if (historyToolCount > 0) historyFilterOptions.push(['tool', 'historyFilterTool'])
+        var visibleHistory = historyItems.filter(function (entry) {
+          if (historyFilter === 'all') return true
+          return historySourceOf(entry) === historyFilter
+        })
         var loading = status === 'loading'
         var searchBar = h(SearchBar, { t: t, value: draft, loading: loading, onChange: setDraft, onSubmit: onSubmit, onCancel: cancelSearch })
         var modeTabs = showModes ? h(ModeTabs, { t: t, mode: mode, onChange: onModeChange }) : null
@@ -2286,12 +2295,7 @@
                         h(
                           'div',
                           { className: 'ais-history-filters' },
-                          [
-                            ['all', 'historyFilterAll'],
-                            ['page', 'historyFilterPage'],
-                            ['tool', 'historyFilterTool'],
-                            ['unknown', 'historyFilterUnknown'],
-                          ].map(function (item) {
+                          historyFilterOptions.map(function (item) {
                             return h(
                               'button',
                               {
@@ -3692,15 +3696,14 @@
                   ),
                 ),
                 historyInfo.counts !== null
-                  ? h(
-                      'p',
-                      { className: 'ais-pref-hint' },
-                      format(t('historyCounts'), {
+                  ? h('p', { className: 'ais-pref-hint' }, (function () {
+                      var base = format(t('historyCounts'), {
                         page: historyInfo.counts.page || 0,
                         tool: historyInfo.counts.tool || 0,
-                        unknown: historyInfo.counts.unknown || 0,
-                      }),
-                    )
+                      })
+                      var legacy = historyInfo.counts.legacy || 0
+                      return legacy > 0 ? format(t('historyCountsLegacy'), { base: base, legacy: legacy }) : base
+                    })())
                   : null,
               ),
               h('p', { className: statusClass, role: 'status' }, statusText),
