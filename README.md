@@ -65,7 +65,7 @@ Harness 里的一个搜索面板，包含三个模式：**答疑**、**百科**�
 | 官网识别映射 | 可添加多个自定义品牌：品牌名 + 别名（逗号分隔）+ 官网首页 URL；支持 **Excel（.xlsx）/ CSV 导入**，不限条数；自定义优先于内置映射，可删除 |
 | 自定义搜索 API | 可切换 Tavily / 博查 / SearXNG / Serper，填接口地址与 API Key 替换默认联网搜索；默认使用 Harness 搜索 |
 | 自定义思考模型 | OpenAI 兼容接口（Base URL + API Key + 模型名）+ 思考强度（跟随模型 / 低 / 中 / 高），用于摘要、评分与百科；默认使用 Harness 模型 |
-| 搜索历史 | 最近 20 条成功搜索，可一键清空 |
+| 搜索历史 | 最近 20 条成功搜索，每条标注来源（页面 / AI 工具 / 未知），搜索页可按来源筛选，设置页显示来源统计；可一键清空 |
 
 > 设置左侧导航的图标由 Harness 外壳按固定 section id 映射，插件无法直接注册；
 > AI 搜索用「给导航行打标记 + CSS mask」的方式换成了放大镜图标（与 dsh-better-sidebar 同款适配）。
@@ -108,7 +108,7 @@ DSH home（默认 `~/.dsh`）下的 `ai-search/` 目录：
 | --- | --- | --- |
 | GET | `/.dsh-ai-search/health` | 依赖服务、版本、模式、当前设置与历史条数 |
 | GET/POST | `/.dsh-ai-search/settings` | 读取 / 部分更新设置 |
-| GET/POST | `/.dsh-ai-search/history` | 读取 / 清空搜索历史 |
+| GET/POST | `/.dsh-ai-search/history` | 读取（含每条 `source` 与来源 `counts`）/ 清空搜索历史 |
 | POST | `/.dsh-ai-search/search` | `{ query, mode?, maxResults?, ai?, uiLanguage?, page?, exclude? }` |
 
 > 安全说明：旧版 `GET /search` 调试入口已移除（它可被任意网页用简单请求触发，刷检索/模型

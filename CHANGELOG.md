@@ -1,5 +1,40 @@
 # 更新日志 / Changelog
 
+## [1.4.5-fix1-beta.1] - 2026-11-01
+
+### 中文
+
+**改进**
+- 搜索历史新增**来源标记**：每条记录标注「页面」或「AI 工具」（Agent 通过 `curated_search` 发起的搜索）
+- 搜索页「最近搜索」增加**来源筛选**：全部 / 页面 / AI 工具 / 旧记录，只显示对应来源的条目
+- 设置页搜索历史显示**按来源统计**（页面 X · AI 工具 Y · 其他 Z）
+- `GET /history` 返回每条记录的 `source`，并新增按来源的 `counts` 统计
+
+**修复**
+- 页面搜索和 Agent 工具调用混在同一份历史里、无法区分的问题
+- 旧版本历史没有来源字段，读取时自动标记为「未知」，不影响使用
+
+**测试**
+- 7 个自测套件全部通过；新增来源记录、旧数据迁移、来源筛选、按来源统计等断言
+
+### English
+
+**Changed**
+- Search history entries now carry a **source marker**: "Page" or "AI tool" (searches started by an
+  agent through `curated_search`)
+- The "Recent searches" list on the search page gained a **source filter**:
+  All / Page / AI tool / Legacy
+- The settings history section shows **per-source counts** (Page X · AI tool Y · Other Z)
+- `GET /history` now returns `source` per entry plus per-source `counts`
+
+**Fixed**
+- Page searches and agent tool calls could no longer be told apart in the shared history
+- Legacy entries without a source are read as "Unknown" and keep working
+
+**Testing**
+- All 7 test suites pass; added assertions for recorded sources, legacy migration, source filtering
+  and per-source counts
+
 ## [1.4.4] - 2026-10-30
 
 ### 中文

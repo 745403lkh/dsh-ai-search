@@ -216,6 +216,15 @@
         newSearch: '新搜索',
         historyTitle: '最近搜索',
         historyClear: '清空',
+        historyFilterAll: '全部',
+        historyFilterPage: '页面',
+        historyFilterTool: 'AI 工具',
+        historyFilterUnknown: '旧记录',
+        historySourcePage: '页面',
+        historySourceTool: 'AI',
+        historySourceUnknown: '未知',
+        historyEmptyFilter: '该来源暂无记录',
+        historyCounts: '页面 {page} · AI 工具 {tool} · 其他 {unknown}',
         detailBrief: '简明',
         detailStandard: '标准',
         detailDetailed: '详尽',
@@ -386,6 +395,15 @@
         newSearch: 'New search',
         historyTitle: 'Recent searches',
         historyClear: 'Clear',
+        historyFilterAll: 'All',
+        historyFilterPage: 'Page',
+        historyFilterTool: 'AI tool',
+        historyFilterUnknown: 'Legacy',
+        historySourcePage: 'Page',
+        historySourceTool: 'AI',
+        historySourceUnknown: 'Unknown',
+        historyEmptyFilter: 'No entries from this source',
+        historyCounts: 'Page {page} · AI tool {tool} · Other {unknown}',
         detailBrief: 'Brief',
         detailStandard: 'Standard',
         detailDetailed: 'Detailed',
@@ -549,6 +567,17 @@
         '.ais-history-clear{border:0;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:12px;line-height:18px;cursor:pointer;padding:2px 8px;border-radius:6px}',
         '.ais-history-clear:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2))}',
         '.ais-history-clear:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}',
+        '.ais-history-head{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}',
+        '.ais-history-filters{display:flex;align-items:center;gap:3px;flex-wrap:wrap}',
+        '.ais-history-filter{border:1px solid transparent;background:transparent;color:var(--dsw-alias-label-tertiary);border-radius:999px;padding:2px 8px;font:inherit;font-size:12px;line-height:18px;cursor:pointer}',
+        '.ais-history-filter:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2))}',
+        '.ais-history-filter-active{background:color-mix(in srgb,var(--dsw-alias-brand-primary) 12%,transparent);border-color:color-mix(in srgb,var(--dsw-alias-brand-primary) 32%,transparent);color:var(--dsw-alias-brand-primary)}',
+        '.ais-history-source{flex:none;display:inline-block;font-size:10px;line-height:15px;padding:0 5px;border-radius:999px;margin-right:6px;font-weight:600;background:color-mix(in srgb,var(--dsw-alias-label-tertiary) 14%,transparent);color:var(--dsw-alias-label-secondary)}',
+        '.ais-history-source-page{background:color-mix(in srgb,var(--dsw-alias-brand-primary) 14%,transparent);color:var(--dsw-alias-brand-primary)}',
+        '.ais-history-source-tool{background:color-mix(in srgb,#a855f7 16%,transparent);color:color-mix(in srgb,#a855f7 78%,var(--dsw-alias-label-primary))}',
+        '.ais-history-source-unknown{opacity:.85}',
+        '.ais-hero-chips .ais-chip{display:inline-flex;align-items:center}',
+        '.ais-history-empty{margin:0}',
         '.ais-modes{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1)}',
         '.ais-mode-btn{display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:6px 14px;border:0;border-radius:9px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;cursor:pointer;transition:background .15s ease,color .15s ease}',
         '.ais-mode-btn:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2))}',
@@ -1858,6 +1887,9 @@
         var historyState = React.useState([])
         var historyItems = historyState[0]
         var setHistoryItems = historyState[1]
+        var historyFilterState = React.useState('all')
+        var historyFilter = historyFilterState[0]
+        var setHistoryFilter = historyFilterState[1]
         var boardState = React.useState(restore === null ? 'all' : restore.board || 'all')
         var board = boardState[0]
         var setBoard = boardState[1]
@@ -2216,6 +2248,17 @@
         )
 
         var suggestions = SUGGESTIONS[lang] || SUGGESTIONS.zh
+        var visibleHistory = historyItems.filter(function (entry) {
+          if (historyFilter === 'all') return true
+          var source = entry && (entry.source === 'page' || entry.source === 'tool') ? entry.source : 'unknown'
+          return source === historyFilter
+        })
+        function historySourceOf(entry) {
+          return entry && (entry.source === 'page' || entry.source === 'tool') ? entry.source : 'unknown'
+        }
+        function historySourceKey(source) {
+          return source === 'page' ? 'historySourcePage' : source === 'tool' ? 'historySourceTool' : 'historySourceUnknown'
+        }
         var loading = status === 'loading'
         var searchBar = h(SearchBar, { t: t, value: draft, loading: loading, onChange: setDraft, onSubmit: onSubmit, onCancel: cancelSearch })
         var modeTabs = showModes ? h(ModeTabs, { t: t, mode: mode, onChange: onModeChange }) : null
@@ -2236,27 +2279,58 @@
                   ? h(
                       'div',
                       { className: 'ais-hero-history' },
-                      h('span', { className: 'ais-history-label' }, t('historyTitle')),
                       h(
                         'div',
-                        { className: 'ais-hero-chips' },
-                        historyItems.slice(0, 6).map(function (entry) {
-                          return h(
-                            'button',
-                            {
-                              key: entry.query,
-                              type: 'button',
-                              className: 'ais-chip',
-                              title: entry.at ? entry.query + ' · ' + htmlTime(entry.at) : entry.query,
-                              onClick: function () {
-                                onChip(entry.query)
+                        { className: 'ais-history-head' },
+                        h('span', { className: 'ais-history-label' }, t('historyTitle')),
+                        h(
+                          'div',
+                          { className: 'ais-history-filters' },
+                          [
+                            ['all', 'historyFilterAll'],
+                            ['page', 'historyFilterPage'],
+                            ['tool', 'historyFilterTool'],
+                            ['unknown', 'historyFilterUnknown'],
+                          ].map(function (item) {
+                            return h(
+                              'button',
+                              {
+                                key: item[0],
+                                type: 'button',
+                                className: 'ais-history-filter' + (historyFilter === item[0] ? ' ais-history-filter-active' : ''),
+                                onClick: function () {
+                                  setHistoryFilter(item[0])
+                                },
                               },
-                            },
-                            entry.query,
-                          )
-                        }),
+                              t(item[1]),
+                            )
+                          }),
+                        ),
+                        h('button', { type: 'button', className: 'ais-history-clear', onClick: clearHistory }, t('historyClear')),
                       ),
-                      h('button', { type: 'button', className: 'ais-history-clear', onClick: clearHistory }, t('historyClear')),
+                      visibleHistory.length > 0
+                        ? h(
+                            'div',
+                            { className: 'ais-hero-chips' },
+                            visibleHistory.slice(0, 6).map(function (entry) {
+                              var source = historySourceOf(entry)
+                              return h(
+                                'button',
+                                {
+                                  key: entry.query,
+                                  type: 'button',
+                                  className: 'ais-chip',
+                                  title: entry.at ? entry.query + ' · ' + htmlTime(entry.at) : entry.query,
+                                  onClick: function () {
+                                    onChip(entry.query)
+                                  },
+                                },
+                                h('span', { className: 'ais-history-source ais-history-source-' + source }, t(historySourceKey(source))),
+                                entry.query,
+                              )
+                            }),
+                          )
+                        : h('p', { className: 'ais-pref-hint ais-history-empty' }, t('historyEmptyFilter')),
                     )
                   : h('div', { className: 'ais-hero-chips' }, h(SuggestionList, { t: t, items: suggestions, onPick: onChip })),
               ),
@@ -2674,7 +2748,7 @@
         })
         var settings = state[0]
         var setSettings = state[1]
-        var historyState = React.useState({ count: 0, cleared: false, clearing: false })
+        var historyState = React.useState({ count: 0, counts: null, cleared: false, clearing: false })
         var historyInfo = historyState[0]
         var setHistoryInfo = historyState[1]
         var aliveRef = React.useRef(true)
@@ -2722,8 +2796,9 @@
             .then(function (payload) {
               if (!aliveRef.current) return
               var items = payload && Array.isArray(payload.items) ? payload.items : []
+              var counts = payload && payload.counts && typeof payload.counts === 'object' ? payload.counts : null
               setHistoryInfo(function (previous) {
-                return { ...previous, count: items.length }
+                return { ...previous, count: items.length, counts: counts }
               })
             })
             .catch(function () {
@@ -3055,7 +3130,7 @@
           requestJson('/history', { method: 'POST', body: { action: 'clear' } })
             .then(function () {
               if (!aliveRef.current) return
-              setHistoryInfo({ count: 0, cleared: true, clearing: false })
+              setHistoryInfo({ count: 0, counts: { page: 0, tool: 0, unknown: 0, total: 0 }, cleared: true, clearing: false })
             })
             .catch(function () {
               if (!aliveRef.current) return
@@ -3616,6 +3691,17 @@
                     t('historyClear'),
                   ),
                 ),
+                historyInfo.counts !== null
+                  ? h(
+                      'p',
+                      { className: 'ais-pref-hint' },
+                      format(t('historyCounts'), {
+                        page: historyInfo.counts.page || 0,
+                        tool: historyInfo.counts.tool || 0,
+                        unknown: historyInfo.counts.unknown || 0,
+                      }),
+                    )
+                  : null,
               ),
               h('p', { className: statusClass, role: 'status' }, statusText),
             ),
