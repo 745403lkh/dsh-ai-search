@@ -1,5 +1,33 @@
 # 更新日志 / Changelog
 
+## [1.4.6-beta.3] - 2026-11-22
+
+### 中文
+
+**改进**
+- 选中文本搜索改为「普通模式 + 答疑检测」：
+  - 普通模式单选：答疑 / 百科 / 浏览 / **搜索引擎**（百度 / 必应 / Google / 搜狗 / 自定义引擎，选中直接跳结果页）
+  - **答疑检测**开关（默认开）：检测到问句才改用答疑，不再按长度瞎猜；关闭后完全按普通模式
+  - 新增**打开位置**偏好：搜索主页 / 侧边栏（侧边栏需要 dsh-better-sidebar，不可用时回退主页）
+- 侧边栏打开时通过页签参数携带查询与模式，新页签挂载后自动搜索
+- 更新设置页文案、README 与插件详情描述
+
+**测试**
+- 7 个自测套件全部通过；新增问句检测、普通模式决策、引擎模式/打开位置校验等断言
+
+### English
+
+**Changed**
+- Selection search now uses "normal mode + question detection":
+  - Normal mode: Answers / Encyclopedia / Browse / **Search engine** (Baidu, Bing, Google, Sogou or a custom engine; opens the engine result page directly)
+  - **Question detection** (on by default): only question-like selections switch to Answers; no more guessing from length; when off, the normal mode always applies
+  - New **Open in** preference: search page or sidebar (sidebar needs dsh-better-sidebar and falls back to the search page)
+- Sidebar opening carries the query and mode through the tab parameters, so the new tab searches automatically
+- Updated settings copy, README and plugin detail description
+
+**Testing**
+- All 7 test suites pass; added assertions for question detection, normal-mode decisions and engine/open-in validation
+
 ## [1.4.6-beta.2] - 2026-11-22
 
 ### 中文

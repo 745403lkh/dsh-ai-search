@@ -36,7 +36,15 @@
       var SELECTION_SYNC = null
       var SELECTION_EVENT = 'dsh-ai-search:selection-search'
       var PENDING_SEARCH_QUERY = null
+      var PENDING_SEARCH_MODE = null
       var OPEN_SEARCH_TEXT = null
+      var OPEN_SIDEBAR_SEARCH = null
+      var SELECTION_SEARCH_MODE = 'encyclopedia'
+      var SELECTION_SEARCH_ENGINE = 'baidu'
+      var SELECTION_QUESTION_DETECT = true
+      var SELECTION_SEARCH_OPEN_IN = 'main'
+      var SELECTION_SEARCH_MODE_OPTIONS = ['qa', 'encyclopedia', 'browse', 'engine']
+      var SELECTION_SEARCH_OPEN_IN_OPTIONS = ['main', 'sidebar']
 
       // ------------------------------------------------------------------
       // 更好的侧边栏（dsh-better-sidebar）适配
@@ -235,6 +243,18 @@
         selectionSearchAction: '搜索',
         selectionSearchLabel: '选中文本搜索',
         selectionSearchHint: '选中文字时，在浮动工具栏里加一个「搜索」按钮（保留原来的引用）。关闭后使用原生引用浮层。',
+        selectionNormalModeLabel: '普通模式',
+        selectionModeQa: '答疑',
+        selectionModeEncyclopedia: '百科',
+        selectionModeBrowse: '浏览',
+        selectionModeEngine: '搜索引擎',
+        selectionEngineLabel: '搜索引擎',
+        selectionDetectLabel: '答疑检测',
+        selectionDetectHint: '检测到问句时改用答疑；关闭后完全按普通模式。',
+        selectionOpenInLabel: '打开位置',
+        selectionOpenMain: '搜索主页',
+        selectionOpenSidebar: '侧边栏',
+        selectionOpenSidebarHint: '侧边栏打开需要安装并启用 dsh-better-sidebar；不可用时自动回退搜索主页。',
         historyCounts: '页面 {page} · AI 工具 {tool}',
         historyCountsLegacy: '{base} · 历史 {legacy}',
         detailBrief: '简明',
@@ -419,6 +439,18 @@
         selectionSearchAction: 'Search',
         selectionSearchLabel: 'Search selected text',
         selectionSearchHint: 'Adds a Search button beside Quote in the selection toolbar. Turn it off to keep the native quote surface only.',
+        selectionNormalModeLabel: 'Normal mode',
+        selectionModeQa: 'Answers',
+        selectionModeEncyclopedia: 'Encyclopedia',
+        selectionModeBrowse: 'Browse',
+        selectionModeEngine: 'Search engine',
+        selectionEngineLabel: 'Search engine',
+        selectionDetectLabel: 'Question detection',
+        selectionDetectHint: 'Use Answers when the selection is a question; otherwise use the normal mode.',
+        selectionOpenInLabel: 'Open in',
+        selectionOpenMain: 'Search page',
+        selectionOpenSidebar: 'Sidebar',
+        selectionOpenSidebarHint: 'Sidebar opening needs dsh-better-sidebar; falls back to the search page when unavailable.',
         historyCounts: 'Page {page} · AI tool {tool}',
         historyCountsLegacy: '{base} · legacy {legacy}',
         detailBrief: 'Brief',
@@ -1860,7 +1892,11 @@
         }
         var tabId =
           info !== null && info !== undefined && info.tab !== undefined && info.tab !== null && typeof info.tab.id === 'string' ? info.tab.id : NS
-        return h(SearchPage, { embedded: true, instanceId: 'native:' + tabId })
+        var navigation = info !== null && info !== undefined && info.tab !== undefined && info.tab !== null ? info.tab.navigation : null
+        var params = navigation !== null && navigation !== undefined && navigation.params !== null && navigation.params !== undefined ? navigation.params : null
+        var initialQuery = params !== null && typeof params.query === 'string' ? params.query : ''
+        var initialMode = params !== null && MODES.indexOf(params.mode) >= 0 ? params.mode : ''
+        return h(SearchPage, { embedded: true, instanceId: 'native:' + tabId, initialQuery: initialQuery, initialMode: initialMode })
       }
 
       /** 原生页签的 guide 图标（宿主以函数形式渲染）。 */
@@ -1891,6 +1927,7 @@
         var result = resultState[0]
         var setResult = resultState[1]
         var coverRequestedRef = React.useRef({})
+        var appliedInitialRef = React.useRef('')
         var errorState = React.useState(restore === null ? '' : restore.error || '')
         var error = errorState[0]
         var setError = errorState[1]
@@ -2182,16 +2219,19 @@
           function () {
             function handleSelectionQuery(event) {
               var query = event !== null && event !== undefined && event.detail !== null && event.detail !== undefined && typeof event.detail.query === 'string' ? event.detail.query : ''
+              var mode = event !== null && event !== undefined && event.detail !== null && event.detail !== undefined && MODES.indexOf(event.detail.mode) >= 0 ? event.detail.mode : 'qa'
               if (query.trim() === '') return
-              runSearch(query, 'qa')
+              runSearch(query, mode)
             }
             if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
               window.addEventListener(SELECTION_EVENT, handleSelectionQuery)
             }
             if (PENDING_SEARCH_QUERY !== null) {
               var pending = PENDING_SEARCH_QUERY
+              var pendingMode = MODES.indexOf(PENDING_SEARCH_MODE) >= 0 ? PENDING_SEARCH_MODE : 'qa'
               PENDING_SEARCH_QUERY = null
-              runSearch(pending, 'qa')
+              PENDING_SEARCH_MODE = null
+              runSearch(pending, pendingMode)
             }
             return function () {
               if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
@@ -2200,6 +2240,21 @@
             }
           },
           [runSearch],
+        )
+
+        // 侧边栏页签的初始查询（openTab 的 params.query/mode），只应用一次。
+        React.useEffect(
+          function () {
+            var query = typeof props.initialQuery === 'string' ? props.initialQuery.trim() : ''
+            if (query === '') return undefined
+            var mode = MODES.indexOf(props.initialMode) >= 0 ? props.initialMode : 'qa'
+            var key = query + '|' + mode
+            if (appliedInitialRef.current === key) return undefined
+            appliedInitialRef.current = key
+            runSearch(query, mode)
+            return undefined
+          },
+          [props.initialQuery, props.initialMode, runSearch],
         )
 
         var changeEngine = React.useCallback(function (next) {
@@ -2759,6 +2814,35 @@
       }
 
       /**
+       * 答疑检测：只判断选中文字是不是问句，不做「长句→浏览」这类猜测。
+       * @param {unknown} raw
+       * @returns {boolean}
+       */
+      function isQuestionText(raw) {
+        var text = typeof raw === 'string' ? raw.replace(/\s+/g, ' ').trim() : ''
+        if (text === '') return false
+        if (/[?？]/.test(text)) return true
+        if (/怎么|如何|为什么|为何|是什么|什么是|哪些|哪个|多少|是否|能不能|可不可以|吗$|呢$|咋/i.test(text)) return true
+        if (/[a-z]/i.test(text) && /\b(how|what|why|which|who|when|where|can|could|should|is|are|do|does)\b/i.test(text)) return true
+        return false
+      }
+
+      /**
+       * 选中搜索的最终决策：答疑检测命中则答疑；否则用设置里的普通模式（含搜索引擎）。
+       * @param {unknown} raw
+       * @returns {{ kind: 'ai', mode: 'qa' | 'encyclopedia' | 'browse' } | { kind: 'engine', engine: string }}
+       */
+      function resolveSelectionSearch(raw) {
+        var text = typeof raw === 'string' ? raw : ''
+        if (SELECTION_QUESTION_DETECT === true && isQuestionText(text)) return { kind: 'ai', mode: 'qa' }
+        if (SELECTION_SEARCH_MODE === 'engine') return { kind: 'engine', engine: SELECTION_SEARCH_ENGINE }
+        if (SELECTION_SEARCH_MODE_OPTIONS.indexOf(SELECTION_SEARCH_MODE) >= 0 && SELECTION_SEARCH_MODE !== 'engine') {
+          return { kind: 'ai', mode: SELECTION_SEARCH_MODE }
+        }
+        return { kind: 'ai', mode: 'encyclopedia' }
+      }
+
+      /**
        * 选中文本后的操作面：引用（复用原生 insertQuote）+ 搜索（打开 AI 搜索并预填）。
        * 注册到 conversation.chat.text-interaction：key 'quote' 用于替换原生引用面，
        * key NS 作为内置 quote 插件缺席时的兜底面。
@@ -2802,7 +2886,13 @@
           }
           surface.clearSelection()
           surface.dismiss()
-          if (typeof OPEN_SEARCH_TEXT === 'function') OPEN_SEARCH_TEXT(text)
+          var decision = resolveSelectionSearch(text)
+          if (decision.kind === 'engine') {
+            var engine = engineOf(decision.engine)
+            if (engine !== null && engine !== undefined) openUrl(engineSearchUrl(engine, text))
+            return
+          }
+          if (typeof OPEN_SEARCH_TEXT === 'function') OPEN_SEARCH_TEXT(text, decision.mode)
         }
         return h(
           'div',
@@ -2832,6 +2922,19 @@
             t('selectionSearchAction'),
           ),
         )
+      }
+
+      /** 选中搜索可选的外部搜索引擎（不含 AI，自定义引擎用 custom:<id>）。 */
+      function engineEntriesForSelection() {
+        var list = ENGINES.filter(function (entry) {
+          return entry.id !== 'ai'
+        }).map(function (entry) {
+          return { id: entry.id, label: entry.label }
+        })
+        CUSTOM_ENGINES.forEach(function (entry) {
+          list.push({ id: 'custom:' + entry.id, label: entry.name })
+        })
+        return list
       }
 
       /** 把服务端返回的 customApi 归一化成设置页状态（字段缺失时给默认值）。 */
@@ -2867,6 +2970,10 @@
           browseWeights: { relevance: 40, timeliness: 30, heat: 30 },
           preserveState: true,
           selectionSearch: true,
+          selectionSearchMode: 'encyclopedia',
+          selectionSearchEngine: 'baidu',
+          selectionQuestionDetect: true,
+          selectionSearchOpenIn: 'main',
           betterSidebar: true,
           openLinksInSidebar: true,
           defaultEngine: 'ai',
@@ -2921,6 +3028,10 @@
                   browseWeights: next.browseWeights || previous.browseWeights,
                   preserveState: next.preserveState !== false,
                   selectionSearch: next.selectionSearch !== false,
+                  selectionSearchMode: SELECTION_SEARCH_MODE_OPTIONS.indexOf(next.selectionSearchMode) >= 0 ? next.selectionSearchMode : 'encyclopedia',
+                  selectionSearchEngine: typeof next.selectionSearchEngine === 'string' ? next.selectionSearchEngine : 'baidu',
+                  selectionQuestionDetect: next.selectionQuestionDetect !== false,
+                  selectionSearchOpenIn: next.selectionSearchOpenIn === 'sidebar' ? 'sidebar' : 'main',
                   betterSidebar: next.betterSidebar !== false,
                   openLinksInSidebar: next.openLinksInSidebar !== false,
                   defaultEngine: next.defaultEngine || 'ai',
@@ -3063,6 +3174,50 @@
             SELECTION_SEARCH = next
             if (typeof SELECTION_SYNC === 'function') SELECTION_SYNC()
             save({ selectionSearch: next })
+          },
+          [save],
+        )
+
+        var chooseSelectionSearchMode = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, selectionSearchMode: next }
+            })
+            SELECTION_SEARCH_MODE = next
+            save({ selectionSearchMode: next })
+          },
+          [save],
+        )
+
+        var chooseSelectionSearchEngine = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, selectionSearchEngine: next }
+            })
+            SELECTION_SEARCH_ENGINE = next
+            save({ selectionSearchEngine: next })
+          },
+          [save],
+        )
+
+        var chooseSelectionQuestionDetect = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, selectionQuestionDetect: next }
+            })
+            SELECTION_QUESTION_DETECT = next
+            save({ selectionQuestionDetect: next })
+          },
+          [save],
+        )
+
+        var chooseSelectionSearchOpenIn = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, selectionSearchOpenIn: next }
+            })
+            SELECTION_SEARCH_OPEN_IN = next
+            save({ selectionSearchOpenIn: next })
           },
           [save],
         )
@@ -3517,6 +3672,117 @@
                     },
                   }),
                 ),
+                settings.selectionSearch
+                  ? h(
+                      'div',
+                      null,
+                      h(
+                        'div',
+                        { className: 'ais-pref-inline' },
+                        h('span', { className: 'ais-pref-hint' }, t('selectionNormalModeLabel')),
+                        h(
+                          'div',
+                          { className: 'ais-seg', role: 'group' },
+                          [
+                            ['qa', 'selectionModeQa'],
+                            ['encyclopedia', 'selectionModeEncyclopedia'],
+                            ['browse', 'selectionModeBrowse'],
+                            ['engine', 'selectionModeEngine'],
+                          ].map(function (entry) {
+                            return h(
+                              'button',
+                              {
+                                key: entry[0],
+                                type: 'button',
+                                className: 'ais-seg-btn',
+                                'aria-pressed': settings.selectionSearchMode === entry[0] ? 'true' : 'false',
+                                onClick: function () {
+                                  chooseSelectionSearchMode(entry[0])
+                                },
+                              },
+                              t(entry[1]),
+                            )
+                          }),
+                        ),
+                      ),
+                      settings.selectionSearchMode === 'engine'
+                        ? h(
+                            'div',
+                            { className: 'ais-pref-inline' },
+                            h('span', { className: 'ais-pref-hint' }, t('selectionEngineLabel')),
+                            h(
+                              'div',
+                              { className: 'ais-seg', role: 'group' },
+                              engineEntriesForSelection().map(function (entry) {
+                                return h(
+                                  'button',
+                                  {
+                                    key: entry.id,
+                                    type: 'button',
+                                    className: 'ais-seg-btn',
+                                    'aria-pressed': settings.selectionSearchEngine === entry.id ? 'true' : 'false',
+                                    onClick: function () {
+                                      chooseSelectionSearchEngine(entry.id)
+                                    },
+                                  },
+                                  t(entry.label),
+                                )
+                              }),
+                            ),
+                          )
+                        : null,
+                      h(
+                        'div',
+                        { className: 'ais-pref-inline' },
+                        h(
+                          'div',
+                          { className: 'ais-pref-label-block' },
+                          h('div', { className: 'ais-pref-label' }, t('selectionDetectLabel')),
+                          h('p', { className: 'ais-pref-hint' }, t('selectionDetectHint')),
+                        ),
+                        h('button', {
+                          type: 'button',
+                          role: 'switch',
+                          className: 'ais-switch',
+                          'aria-checked': settings.selectionQuestionDetect ? 'true' : 'false',
+                          'aria-label': t('selectionDetectLabel'),
+                          onClick: function () {
+                            chooseSelectionQuestionDetect(!settings.selectionQuestionDetect)
+                          },
+                        }),
+                      ),
+                      h(
+                        'div',
+                        { className: 'ais-pref-inline' },
+                        h('span', { className: 'ais-pref-hint' }, t('selectionOpenInLabel')),
+                        h(
+                          'div',
+                          { className: 'ais-seg', role: 'group' },
+                          [
+                            ['main', 'selectionOpenMain'],
+                            ['sidebar', 'selectionOpenSidebar'],
+                          ].map(function (entry) {
+                            return h(
+                              'button',
+                              {
+                                key: entry[0],
+                                type: 'button',
+                                className: 'ais-seg-btn',
+                                'aria-pressed': settings.selectionSearchOpenIn === entry[0] ? 'true' : 'false',
+                                onClick: function () {
+                                  chooseSelectionSearchOpenIn(entry[0])
+                                },
+                              },
+                              t(entry[1]),
+                            )
+                          }),
+                        ),
+                      ),
+                      settings.selectionSearchOpenIn === 'sidebar'
+                        ? h('p', { className: 'ais-pref-hint' }, t('selectionOpenSidebarHint'))
+                        : null,
+                    )
+                  : null,
               ),
               h(
                 'div',
@@ -4011,8 +4277,12 @@
             openInSidebarBrowser = function (url) {
               service.openTab('browser', { params: { url: url } })
             }
+            OPEN_SIDEBAR_SEARCH = function (query, mode) {
+              service.openTab(NS, { params: { query: query, mode: mode } })
+            }
             return function () {
               openInSidebarBrowser = null
+              OPEN_SIDEBAR_SEARCH = null
             }
           })
 
@@ -4029,8 +4299,18 @@
           })
 
           // 选区搜索：打开主面板并广播挂起查询（主面板未挂载时由 SearchPage 首次挂载消费）。
-          OPEN_SEARCH_TEXT = function (text) {
+          OPEN_SEARCH_TEXT = function (text, mode) {
+            var nextMode = MODES.indexOf(mode) >= 0 ? mode : 'qa'
+            if (SELECTION_SEARCH_OPEN_IN === 'sidebar' && typeof OPEN_SIDEBAR_SEARCH === 'function') {
+              try {
+                OPEN_SIDEBAR_SEARCH(String(text), nextMode)
+                return
+              } catch (sidebarError) {
+                /* 侧边栏打开失败时回退搜索主页 */
+              }
+            }
             PENDING_SEARCH_QUERY = String(text)
+            PENDING_SEARCH_MODE = nextMode
             try {
               var layout = typeof ctx.get === 'function' ? ctx.get('layout') : null
               if (layout !== null && layout !== undefined && typeof layout.selectPanel === 'function') layout.selectPanel(NS)
@@ -4039,7 +4319,7 @@
             }
             try {
               if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
-                window.dispatchEvent(new CustomEvent(SELECTION_EVENT, { detail: { query: PENDING_SEARCH_QUERY } }))
+                window.dispatchEvent(new CustomEvent(SELECTION_EVENT, { detail: { query: PENDING_SEARCH_QUERY, mode: PENDING_SEARCH_MODE } }))
               }
             } catch (dispatchError) {
               /* 事件失败时由挂起查询兜底 */
@@ -4093,6 +4373,10 @@
                 ADAPT = payload.settings.betterSidebar !== false
                 OPEN_IN_SIDEBAR = payload.settings.openLinksInSidebar !== false
                 SELECTION_SEARCH = payload.settings.selectionSearch !== false
+                SELECTION_SEARCH_MODE = SELECTION_SEARCH_MODE_OPTIONS.indexOf(payload.settings.selectionSearchMode) >= 0 ? payload.settings.selectionSearchMode : 'encyclopedia'
+                SELECTION_SEARCH_ENGINE = typeof payload.settings.selectionSearchEngine === 'string' ? payload.settings.selectionSearchEngine : 'baidu'
+                SELECTION_QUESTION_DETECT = payload.settings.selectionQuestionDetect !== false
+                SELECTION_SEARCH_OPEN_IN = payload.settings.selectionSearchOpenIn === 'sidebar' ? 'sidebar' : 'main'
                 DEFAULT_ENGINE = payload.settings.defaultEngine || 'ai'
                 setCustomEngines(Array.isArray(payload.settings.customEngines) ? payload.settings.customEngines : [])
                 if (typeof NATIVE_SYNC === 'function') NATIVE_SYNC()
@@ -4148,7 +4432,9 @@
             if (typeof disposeQuoteSearchSurface === 'function') disposeQuoteSearchSurface()
             SELECTION_SYNC = null
             OPEN_SEARCH_TEXT = null
+            OPEN_SIDEBAR_SEARCH = null
             PENDING_SEARCH_QUERY = null
+            PENDING_SEARCH_MODE = null
             if (typeof disposePage === 'function') disposePage()
             if (typeof disposePanel === 'function') disposePanel()
             if (typeof disposeBetterSidebar === 'function') disposeBetterSidebar()
@@ -4160,7 +4446,7 @@
         }, NS + ': panel, page and settings')
       }
 
-      return { name: name, inject: inject, apply: apply, parseOfficialSheetCsv: parseOfficialSheetCsv, parseOfficialSheetXlsx: parseOfficialSheetXlsx }
+      return { name: name, inject: inject, apply: apply, parseOfficialSheetCsv: parseOfficialSheetCsv, parseOfficialSheetXlsx: parseOfficialSheetXlsx, isQuestionText: isQuestionText, resolveSelectionSearch: resolveSelectionSearch }
     },
   })
 })()
