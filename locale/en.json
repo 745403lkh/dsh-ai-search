@@ -1,6 +1,7 @@
 {
   "meta": {
     "title": "AI Search",
-    "description": "Three search modes: Answers (summary + ranked picks), Encyclopedia (adjustable detail levels), and Browse (an info feed split into all/articles/videos/images, ranked by relevance, freshness and heat). Includes result-language and history settings."
+    "description": "Three search modes: Answers (summary + ranked picks), Encyclopedia (adjustable detail), and Browse (all/articles/videos/images with official-site pinning). Includes official-site mappings, custom search APIs and thinking models, and source-filtered history.",
+    "detail": "docs/DETAIL.md"
   }
 }

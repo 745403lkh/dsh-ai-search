@@ -1,5 +1,31 @@
 # 更新日志 / Changelog
 
+## [1.4.6-beta.1] - 2026-11-22
+
+### 中文
+
+**改进**
+- 设置导航图标改用 DSH 0.2+ 官方 `settings.section.icon` 槽位注册（放大镜 SVG 组件），删除旧的 DOM 标记 + CSS mask 方案，修复新版 DSH 下「放大镜 + 默认齿轮」两个图标并存的问题；旧版 DSH 自动回退默认图标
+- 新增插件详情页资源：`docs/DETAIL.md` / `docs/DETAIL.zh.md` + 功能预览图 `docs/preview.svg`，并在 locale 里声明 `meta.detail`；新版插件管理页可展示图文详情
+- 搜索历史支持**单条删除**：每条历史旁的 × 可单独移除（`POST /history` 新增 `action=remove`）
+- 兼容性审计：对照 DSH 0.2.2 升级指南确认网搜索默认提供方、右键菜单图标等变化不影响本插件
+- 更新 locale 里的插件描述，补充官网识别、自定义 API/模型与历史来源筛选
+
+**测试**
+- 7 个自测套件全部通过；新增设置图标槽位注册、单条历史删除、详情资源存在性等断言
+
+### English
+
+**Changed**
+- The settings navigation icon now uses DSH 0.2+'s official `settings.section.icon` slot (a magnifier SVG component); the old DOM-marker + CSS-mask approach is removed, fixing the duplicated magnifier + default gear icon on newer DSH. Older DSH versions fall back to the default icon
+- Added plugin detail resources: `docs/DETAIL.md` / `docs/DETAIL.zh.md` plus a feature preview `docs/preview.svg`, declared through locale `meta.detail`, so the plugin manager can show a rich detail page
+- Search history supports **single-entry removal** through the × next to each entry (`POST /history` gains `action=remove`)
+- Compatibility audit against the DSH 0.2.2 upgrade guides confirmed no impact from the web-search default provider, context-menu icon, or related changes
+- Refreshed the locale plugin description to cover official-site recognition, custom APIs/models and source-filtered history
+
+**Testing**
+- All 7 test suites pass; added assertions for the settings icon slot, single-entry history removal and detail resources
+
 ## [1.4.5-fix1] - 2026-11-01
 
 ### 中文

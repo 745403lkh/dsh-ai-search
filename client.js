@@ -223,6 +223,7 @@
         historySourceTool: 'AI',
         historySourceLegacy: '历史',
         historyEmptyFilter: '该来源暂无记录',
+        historyRemove: '删除这条历史',
         historyCounts: '页面 {page} · AI 工具 {tool}',
         historyCountsLegacy: '{base} · 历史 {legacy}',
         detailBrief: '简明',
@@ -402,6 +403,7 @@
         historySourceTool: 'AI',
         historySourceLegacy: 'Legacy',
         historyEmptyFilter: 'No entries from this source',
+        historyRemove: 'Remove this entry',
         historyCounts: 'Page {page} · AI tool {tool}',
         historyCountsLegacy: '{base} · legacy {legacy}',
         detailBrief: 'Brief',
@@ -578,6 +580,9 @@
         '.ais-history-source-unknown{opacity:.85}',
         '.ais-history-source-legacy{opacity:.85}',
         '.ais-hero-chips .ais-chip{display:inline-flex;align-items:center}',
+        '.ais-chip-wrap{display:inline-flex;align-items:center;gap:2px}',
+        '.ais-chip-remove{border:0;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:13px;line-height:16px;cursor:pointer;padding:2px 4px;border-radius:6px}',
+        '.ais-chip-remove:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2))}',
         '.ais-history-empty{margin:0}',
         '.ais-modes{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1)}',
         '.ais-mode-btn{display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:6px 14px;border:0;border-radius:9px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;cursor:pointer;transition:background .15s ease,color .15s ease}',
@@ -762,8 +767,6 @@
         '.ais-custom-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);min-width:0}',
         '.ais-custom-name{flex:none;font-size:12px;line-height:18px;font-weight:600}',
         '.ais-custom-alias{flex:none;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-secondary)}',
-        '[data-dsh-ai-search-settings-nav] > svg:first-child{display:none}',
-        '[data-dsh-ai-search-settings-nav]::before{content:\'\';flex:none;width:16px;height:16px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2211%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22m21%2021-4.3-4.3%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2211%22%20cy%3D%2211%22%20r%3D%228%22%2F%3E%3Cpath%20d%3D%22m21%2021-4.3-4.3%22%2F%3E%3C%2Fsvg%3E") center / contain no-repeat}',
         '.ais-custom-url{flex:1;min-width:0;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
         '.ais-custom-form{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}',
         '.ais-custom-input{box-sizing:border-box;height:30px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font:inherit;font-size:12px;line-height:18px;min-width:110px;flex:1 1 130px}',
@@ -2048,6 +2051,21 @@
             })
         }, [])
 
+        var removeHistoryEntry = React.useCallback(function (query) {
+          requestJson('/history', { method: 'POST', body: { action: 'remove', query: query } })
+            .then(function () {
+              if (!mountedRef.current) return
+              setHistoryItems(function (previous) {
+                return previous.filter(function (entry) {
+                  return entry.query !== query
+                })
+              })
+            })
+            .catch(function () {
+              /* 忽略 */
+            })
+        }, [])
+
         var abortCurrent = React.useCallback(
           function () {
             if (requestRef.current !== null) {
@@ -2319,18 +2337,34 @@
                             visibleHistory.slice(0, 6).map(function (entry) {
                               var source = historySourceOf(entry)
                               return h(
-                                'button',
-                                {
-                                  key: entry.query,
-                                  type: 'button',
-                                  className: 'ais-chip',
-                                  title: entry.at ? entry.query + ' · ' + htmlTime(entry.at) : entry.query,
-                                  onClick: function () {
-                                    onChip(entry.query)
+                                'span',
+                                { key: entry.query, className: 'ais-chip-wrap' },
+                                h(
+                                  'button',
+                                  {
+                                    type: 'button',
+                                    className: 'ais-chip',
+                                    title: entry.at ? entry.query + ' · ' + htmlTime(entry.at) : entry.query,
+                                    onClick: function () {
+                                      onChip(entry.query)
+                                    },
                                   },
-                                },
-                                h('span', { className: 'ais-history-source ais-history-source-' + source }, t(historySourceKey(source))),
-                                entry.query,
+                                  h('span', { className: 'ais-history-source ais-history-source-' + source }, t(historySourceKey(source))),
+                                  entry.query,
+                                ),
+                                h(
+                                  'button',
+                                  {
+                                    type: 'button',
+                                    className: 'ais-chip-remove',
+                                    title: t('historyRemove'),
+                                    'aria-label': t('historyRemove'),
+                                    onClick: function () {
+                                      removeHistoryEntry(entry.query)
+                                    },
+                                  },
+                                  '×',
+                                ),
                               )
                             }),
                           )
@@ -2656,44 +2690,29 @@
         return rowsToOfficialSheet(rows)
       }
 
-      // ------------------------------------------------------------------
-      // 设置导航图标：settings.section 契约没有 icon 字段，只能给导航行打标记，
-      // 由 CSS mask 替换成放大镜（与 dsh-better-sidebar 同款适配）。
-      // ------------------------------------------------------------------
-      var SETTINGS_NAV_MARKER = 'data-dsh-ai-search-settings-nav'
-
-      function registerSettingsNavIcon(labelGetter) {
-        if (typeof document === 'undefined' || typeof MutationObserver !== 'function') return function () {}
-        var disposed = false
-        var frame = null
-        function sync() {
-          if (disposed) return
-          var label = typeof labelGetter === 'function' ? String(labelGetter() || '').trim() : ''
-          var buttons = document.querySelectorAll('[role="dialog"] nav button')
-          for (var index = 0; index < buttons.length; index += 1) {
-            var button = buttons[index]
-            if (label !== '' && String(button.textContent || '').trim() === label) button.setAttribute(SETTINGS_NAV_MARKER, '')
-            else button.removeAttribute(SETTINGS_NAV_MARKER)
-          }
-        }
-        function schedule() {
-          if (disposed || frame !== null || typeof requestAnimationFrame !== 'function') return
-          frame = requestAnimationFrame(function () {
-            frame = null
-            sync()
-          })
-        }
-        sync()
-        var observer = new MutationObserver(schedule)
-        observer.observe(document.body, { childList: true, subtree: true })
-        return function () {
-          disposed = true
-          observer.disconnect()
-          if (frame !== null && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(frame)
-          frame = null
-          var marked = document.querySelectorAll('[' + SETTINGS_NAV_MARKER + ']')
-          for (var index = 0; index < marked.length; index += 1) marked[index].removeAttribute(SETTINGS_NAV_MARKER)
-        }
+      /**
+       * 设置导航图标：放大镜（DSH 0.2+ 的 settings.section.icon 槽位）。
+       * @param {{ size?: number, active?: boolean }} props
+       */
+      function SettingsNavIcon(props) {
+        var size = props !== null && props !== undefined && typeof props.size === 'number' ? props.size : 16
+        return h(
+          'svg',
+          {
+            width: size,
+            height: size,
+            viewBox: '0 0 24 24',
+            fill: 'none',
+            stroke: 'currentColor',
+            strokeWidth: 2,
+            strokeLinecap: 'round',
+            strokeLinejoin: 'round',
+            'aria-hidden': 'true',
+            focusable: 'false',
+          },
+          h('circle', { cx: 11, cy: 11, r: 8 }),
+          h('path', { d: 'm21 21-4.3-4.3' }),
+        )
       }
 
       /** 把服务端返回的 customApi 归一化成设置页状态（字段缺失时给默认值）。 */
@@ -3730,8 +3749,6 @@
             return (DICTS[pickLang(ctx.locale)] || zh).nav
           }
 
-          // 设置导航里的「AI 搜索」用放大镜图标（settings.section 契约不带 icon，只能打标记 + CSS 替换）。
-          var disposeSettingsNavIcon = registerSettingsNavIcon(panelLabel)
 
           function injectLocale() {
             return { locale: ctx.locale }
@@ -3896,8 +3913,20 @@
             )
           })
 
+          // DSH 0.2+：按 section id 注册设置导航图标；旧版没有该槽位时自动沿用默认图标。
+          var disposeSettingsIcon = ctx.slots.inject('settings.section.icon', function () {
+            return ctx.slots.register(
+              {
+                name: 'settings.section.icon',
+                id: 'ai-search',
+              },
+              SettingsNavIcon,
+            )
+          })
+
           return function () {
             if (typeof disposeSettings === 'function') disposeSettings()
+            if (typeof disposeSettingsIcon === 'function') disposeSettingsIcon()
             if (typeof disposePage === 'function') disposePage()
             if (typeof disposePanel === 'function') disposePanel()
             if (typeof disposeBetterSidebar === 'function') disposeBetterSidebar()
