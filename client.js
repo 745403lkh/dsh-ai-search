@@ -31,6 +31,13 @@
       /** 每个搜索页实例（左侧主面板 / 更好的侧边栏里的各个页签）最近一次快照。 */
       var LAST_SEARCH_STATES = {}
 
+      /** 「选中文本搜索」全局开关与面板打开/挂起查询（选区组件与搜索页共享）。 */
+      var SELECTION_SEARCH = true
+      var SELECTION_SYNC = null
+      var SELECTION_EVENT = 'dsh-ai-search:selection-search'
+      var PENDING_SEARCH_QUERY = null
+      var OPEN_SEARCH_TEXT = null
+
       // ------------------------------------------------------------------
       // 更好的侧边栏（dsh-better-sidebar）适配
       // ------------------------------------------------------------------
@@ -224,6 +231,10 @@
         historySourceLegacy: '历史',
         historyEmptyFilter: '该来源暂无记录',
         historyRemove: '删除这条历史',
+        selectionQuote: '引用',
+        selectionSearchAction: '搜索',
+        selectionSearchLabel: '选中文本搜索',
+        selectionSearchHint: '选中文字时，在浮动工具栏里加一个「搜索」按钮（保留原来的引用）。关闭后使用原生引用浮层。',
         historyCounts: '页面 {page} · AI 工具 {tool}',
         historyCountsLegacy: '{base} · 历史 {legacy}',
         detailBrief: '简明',
@@ -404,6 +415,10 @@
         historySourceLegacy: 'Legacy',
         historyEmptyFilter: 'No entries from this source',
         historyRemove: 'Remove this entry',
+        selectionQuote: 'Quote',
+        selectionSearchAction: 'Search',
+        selectionSearchLabel: 'Search selected text',
+        selectionSearchHint: 'Adds a Search button beside Quote in the selection toolbar. Turn it off to keep the native quote surface only.',
         historyCounts: 'Page {page} · AI tool {tool}',
         historyCountsLegacy: '{base} · legacy {legacy}',
         detailBrief: 'Brief',
@@ -583,6 +598,9 @@
         '.ais-chip-wrap{display:inline-flex;align-items:center;gap:2px}',
         '.ais-chip-remove{border:0;background:transparent;color:var(--dsw-alias-label-tertiary);font:inherit;font-size:13px;line-height:16px;cursor:pointer;padding:2px 4px;border-radius:6px}',
         '.ais-chip-remove:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover,var(--dsw-alias-bg-layer-2))}',
+        '.ais-selection-actions{display:flex;gap:4px;padding:2px}',
+        '.ais-selection-action{padding:5px 10px;border:none;border-radius:999px;background:var(--dsw-alias-button-floating-fill);box-shadow:var(--dsw-elevation-panel);color:var(--dsw-alias-label-primary);font:var(--dsw-font-xs-13);cursor:pointer}',
+        '.ais-selection-action:hover,.ais-selection-action:focus-visible{background:var(--dsw-alias-button-floating-hover)}',
         '.ais-history-empty{margin:0}',
         '.ais-modes{display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:12px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1)}',
         '.ais-mode-btn{display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:6px 14px;border:0;border-radius:9px;background:transparent;color:var(--dsw-alias-label-secondary);font:inherit;cursor:pointer;transition:background .15s ease,color .15s ease}',
@@ -2159,6 +2177,31 @@
           [abortCurrent],
         )
 
+        // 选区搜索：其他位置（选区浮层）发起请求后，在本页填入并执行答疑搜索。
+        React.useEffect(
+          function () {
+            function handleSelectionQuery(event) {
+              var query = event !== null && event !== undefined && event.detail !== null && event.detail !== undefined && typeof event.detail.query === 'string' ? event.detail.query : ''
+              if (query.trim() === '') return
+              runSearch(query, 'qa')
+            }
+            if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+              window.addEventListener(SELECTION_EVENT, handleSelectionQuery)
+            }
+            if (PENDING_SEARCH_QUERY !== null) {
+              var pending = PENDING_SEARCH_QUERY
+              PENDING_SEARCH_QUERY = null
+              runSearch(pending, 'qa')
+            }
+            return function () {
+              if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+                window.removeEventListener(SELECTION_EVENT, handleSelectionQuery)
+              }
+            }
+          },
+          [runSearch],
+        )
+
         var changeEngine = React.useCallback(function (next) {
           if (engineOf(next).id === engine) return
           setEngine(next)
@@ -2715,6 +2758,82 @@
         )
       }
 
+      /**
+       * 选中文本后的操作面：引用（复用原生 insertQuote）+ 搜索（打开 AI 搜索并预填）。
+       * 注册到 conversation.chat.text-interaction：key 'quote' 用于替换原生引用面，
+       * key NS 作为内置 quote 插件缺席时的兜底面。
+       * @param {object} props 选区 Surface + 标准 Session/composer props
+       */
+      function SelectionSearchAction(props) {
+        var t = props.t
+        var surface = props
+        var enabled = true
+        if (typeof props.useSession === 'function') {
+          enabled = props.useSession(function (session) {
+            return session.removed !== true && (session.subagent === null || session.subagent.address.mode === 'continuable')
+          })
+        }
+        React.useEffect(
+          function () {
+            if (!enabled) surface.dismiss()
+          },
+          [enabled, surface.dismiss],
+        )
+        if (!enabled) return null
+        function handleQuote() {
+          var text = surface.readText()
+          if (text === null) {
+            surface.dismiss()
+            return
+          }
+          if (typeof surface.inputActions?.insertQuote !== 'function') {
+            surface.dismiss()
+            return
+          }
+          if (!surface.inputActions.insertQuote(text)) return
+          surface.clearSelection()
+          surface.dismiss()
+        }
+        function handleSearch() {
+          var text = surface.readText()
+          if (text === null) {
+            surface.dismiss()
+            return
+          }
+          surface.clearSelection()
+          surface.dismiss()
+          if (typeof OPEN_SEARCH_TEXT === 'function') OPEN_SEARCH_TEXT(text)
+        }
+        return h(
+          'div',
+          { className: 'ais-selection-actions' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'ais-selection-action',
+              onPointerDown: function (event) {
+                event.preventDefault()
+              },
+              onClick: handleQuote,
+            },
+            t('selectionQuote'),
+          ),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'ais-selection-action ais-selection-action-search',
+              onPointerDown: function (event) {
+                event.preventDefault()
+              },
+              onClick: handleSearch,
+            },
+            t('selectionSearchAction'),
+          ),
+        )
+      }
+
       /** 把服务端返回的 customApi 归一化成设置页状态（字段缺失时给默认值）。 */
       function normalizeApiSnapshot(value) {
         var raw = value !== null && typeof value === 'object' ? value : {}
@@ -2747,6 +2866,7 @@
           encyclopediaDetail: 'standard',
           browseWeights: { relevance: 40, timeliness: 30, heat: 30 },
           preserveState: true,
+          selectionSearch: true,
           betterSidebar: true,
           openLinksInSidebar: true,
           defaultEngine: 'ai',
@@ -2800,6 +2920,7 @@
                   encyclopediaDetail: next.encyclopediaDetail || 'standard',
                   browseWeights: next.browseWeights || previous.browseWeights,
                   preserveState: next.preserveState !== false,
+                  selectionSearch: next.selectionSearch !== false,
                   betterSidebar: next.betterSidebar !== false,
                   openLinksInSidebar: next.openLinksInSidebar !== false,
                   defaultEngine: next.defaultEngine || 'ai',
@@ -2930,6 +3051,18 @@
             })
             OPEN_IN_SIDEBAR = next
             save({ openLinksInSidebar: next })
+          },
+          [save],
+        )
+
+        var chooseSelectionSearch = React.useCallback(
+          function (next) {
+            setSettings(function (previous) {
+              return { ...previous, selectionSearch: next }
+            })
+            SELECTION_SEARCH = next
+            if (typeof SELECTION_SYNC === 'function') SELECTION_SYNC()
+            save({ selectionSearch: next })
           },
           [save],
         )
@@ -3357,6 +3490,30 @@
                     'aria-label': t('openLinksLabel'),
                     onClick: function () {
                       chooseOpenLinks(!settings.openLinksInSidebar)
+                    },
+                  }),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'ais-pref-group' },
+                h(
+                  'div',
+                  { className: 'ais-pref-inline' },
+                  h(
+                    'div',
+                    { className: 'ais-pref-label-block' },
+                    h('div', { className: 'ais-pref-label' }, t('selectionSearchLabel')),
+                    h('p', { className: 'ais-pref-hint' }, t('selectionSearchHint')),
+                  ),
+                  h('button', {
+                    type: 'button',
+                    role: 'switch',
+                    className: 'ais-switch',
+                    'aria-checked': settings.selectionSearch ? 'true' : 'false',
+                    'aria-label': t('selectionSearchLabel'),
+                    onClick: function () {
+                      chooseSelectionSearch(!settings.selectionSearch)
                     },
                   }),
                 ),
@@ -3871,6 +4028,63 @@
             )
           })
 
+          // 选区搜索：打开主面板并广播挂起查询（主面板未挂载时由 SearchPage 首次挂载消费）。
+          OPEN_SEARCH_TEXT = function (text) {
+            PENDING_SEARCH_QUERY = String(text)
+            try {
+              var layout = typeof ctx.get === 'function' ? ctx.get('layout') : null
+              if (layout !== null && layout !== undefined && typeof layout.selectPanel === 'function') layout.selectPanel(NS)
+            } catch (layoutError) {
+              /* 面板切换失败不阻塞搜索 */
+            }
+            try {
+              if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+                window.dispatchEvent(new CustomEvent(SELECTION_EVENT, { detail: { query: PENDING_SEARCH_QUERY } }))
+              }
+            } catch (dispatchError) {
+              /* 事件失败时由挂起查询兜底 */
+            }
+          }
+
+          // 选中文本搜索：替换原生 quote 浮层为「引用 + 搜索」（设置可关）。
+          var disposeQuoteSearchSurface = null
+          function syncSelectionSearch() {
+            var want = SELECTION_SEARCH === true
+            if (want && disposeQuoteSearchSurface === null) {
+              disposeQuoteSearchSurface = ctx.slots.inject('conversation.chat.text-interaction', function () {
+                return ctx.slots.register(
+                  { name: 'conversation.chat.text-interaction', key: 'quote', locale: NS },
+                  SelectionSearchAction,
+                )
+              })
+            } else if (!want && disposeQuoteSearchSurface !== null) {
+              disposeQuoteSearchSurface()
+              disposeQuoteSearchSurface = null
+            }
+          }
+          SELECTION_SYNC = syncSelectionSearch
+          syncSelectionSearch()
+          var disposeSelectionSurface = ctx.slots.inject('conversation.chat.text-interaction', function () {
+            return ctx.slots.register(
+              { name: 'conversation.chat.text-interaction', key: NS, locale: NS },
+              SelectionSearchAction,
+            )
+          })
+          var disposeSelectionInteraction = safeInject(['uiConversation'], function (injected) {
+            var conversation = injected !== undefined && injected !== null && typeof injected.get === 'function' ? injected.get('uiConversation') : null
+            if (conversation === null || conversation === undefined || conversation.interactions === undefined || typeof conversation.interactions.register !== 'function') return
+            return conversation.interactions.register({
+              id: NS,
+              onInteraction: function (request) {
+                if (SELECTION_SEARCH !== true) return
+                if (request === null || typeof request !== 'object' || request.trigger !== 'selection') return
+                var text = typeof request.readText === 'function' ? request.readText() : null
+                if (typeof text !== 'string' || text.trim() === '') return
+                request.open()
+              },
+            })
+          })
+
           // 首次加载设置：保留状态 / 更好的侧边栏适配 / 链接打开方式 / 默认搜索引擎。
           void requestJson('/settings')
             .then(function (payload) {
@@ -3878,9 +4092,11 @@
                 PRESERVE_STATE = payload.settings.preserveState !== false
                 ADAPT = payload.settings.betterSidebar !== false
                 OPEN_IN_SIDEBAR = payload.settings.openLinksInSidebar !== false
+                SELECTION_SEARCH = payload.settings.selectionSearch !== false
                 DEFAULT_ENGINE = payload.settings.defaultEngine || 'ai'
                 setCustomEngines(Array.isArray(payload.settings.customEngines) ? payload.settings.customEngines : [])
                 if (typeof NATIVE_SYNC === 'function') NATIVE_SYNC()
+                if (typeof SELECTION_SYNC === 'function') SELECTION_SYNC()
               }
             })
             .catch(function () {
@@ -3927,12 +4143,17 @@
           return function () {
             if (typeof disposeSettings === 'function') disposeSettings()
             if (typeof disposeSettingsIcon === 'function') disposeSettingsIcon()
+            if (typeof disposeSelectionSurface === 'function') disposeSelectionSurface()
+            if (typeof disposeSelectionInteraction === 'function') disposeSelectionInteraction()
+            if (typeof disposeQuoteSearchSurface === 'function') disposeQuoteSearchSurface()
+            SELECTION_SYNC = null
+            OPEN_SEARCH_TEXT = null
+            PENDING_SEARCH_QUERY = null
             if (typeof disposePage === 'function') disposePage()
             if (typeof disposePanel === 'function') disposePanel()
             if (typeof disposeBetterSidebar === 'function') disposeBetterSidebar()
             if (typeof disposeSidebarTabs === 'function') disposeSidebarTabs()
             if (typeof disposeSidebarBrowser === 'function') disposeSidebarBrowser()
-            if (typeof disposeSettingsNavIcon === 'function') disposeSettingsNavIcon()
             if (typeof disposeDict === 'function') disposeDict()
             if (styleElement.parentNode !== null) styleElement.parentNode.removeChild(styleElement)
           }

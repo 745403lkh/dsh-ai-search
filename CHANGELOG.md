@@ -1,5 +1,35 @@
 # 更新日志 / Changelog
 
+## [1.4.6-beta.2] - 2026-11-22
+
+### 中文
+
+**新增**
+- **选中文本搜索**：在对话/正文里选中文字后，浮动工具栏显示「引用 + 搜索」两个按钮；点「搜索」自动打开 AI 搜索并预填选中文字、执行答疑搜索
+- 设置新增「**选中文本搜索**」开关（默认开启）：关闭后恢复原生引用浮层，不再注册选区扩展
+
+**说明**
+- 选区工具栏在新版 DSH 里一次只能显示一个插件操作面，因此通过替换原生 `conversation.chat.text-interaction` 的 `quote` 渲染器实现，引用逻辑仍复用内置 `insertQuote`
+- 禁用/卸载插件即恢复原生引用按钮；开关关闭会立即注销替换
+- 内置 quote 插件缺席时，注册自己的兜底手势，搜索按钮仍可用
+
+**测试**
+- 7 个自测套件全部通过；新增选区浮层注册、引用复用、搜索按钮、开关校验等断言
+
+### English
+
+**Added**
+- **Search selected text**: selecting text in a conversation now shows a "Quote + Search" toolbar; Search opens AI Search with the selection prefilled and runs an answer search
+- New "**Search selected text**" setting (on by default); turning it off restores the native quote surface and drops the selection extension
+
+**Notes**
+- A selection gesture shows one plugin surface in DSH, so this replaces the built-in `quote` renderer in `conversation.chat.text-interaction` while reusing the native `insertQuote` behavior
+- Disabling/uninstalling the plugin restores the native quote button; turning the setting off unregisters the replacement immediately
+- When the built-in quote plugin is absent, a fallback gesture keeps the Search button available
+
+**Testing**
+- All 7 test suites pass; added assertions for the selection surface registration, quote reuse, search button and setting validation
+
 ## [1.4.6-beta.1] - 2026-11-22
 
 ### 中文
