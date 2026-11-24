@@ -1,88 +1,48 @@
 # 更新日志 / Changelog
 
-## [1.4.6-beta.3] - 2026-11-22
+## [1.4.6] - 2026-11-24
 
-### 中文
-
-**改进**
-- 选中文本搜索改为「普通模式 + 答疑检测」：
-  - 普通模式单选：答疑 / 百科 / 浏览 / **搜索引擎**（百度 / 必应 / Google / 搜狗 / 自定义引擎，选中直接跳结果页）
-  - **答疑检测**开关（默认开）：检测到问句才改用答疑，不再按长度瞎猜；关闭后完全按普通模式
-  - 新增**打开位置**偏好：搜索主页 / 侧边栏（侧边栏需要 dsh-better-sidebar，不可用时回退主页）
-- 侧边栏打开时通过页签参数携带查询与模式，新页签挂载后自动搜索
-- 更新设置页文案、README 与插件详情描述
-
-**测试**
-- 7 个自测套件全部通过；新增问句检测、普通模式决策、引擎模式/打开位置校验等断言
-
-### English
-
-**Changed**
-- Selection search now uses "normal mode + question detection":
-  - Normal mode: Answers / Encyclopedia / Browse / **Search engine** (Baidu, Bing, Google, Sogou or a custom engine; opens the engine result page directly)
-  - **Question detection** (on by default): only question-like selections switch to Answers; no more guessing from length; when off, the normal mode always applies
-  - New **Open in** preference: search page or sidebar (sidebar needs dsh-better-sidebar and falls back to the search page)
-- Sidebar opening carries the query and mode through the tab parameters, so the new tab searches automatically
-- Updated settings copy, README and plugin detail description
-
-**Testing**
-- All 7 test suites pass; added assertions for question detection, normal-mode decisions and engine/open-in validation
-
-## [1.4.6-beta.2] - 2026-11-22
+对比上一正式版 1.4.5-fix1 的更新。
 
 ### 中文
 
 **新增**
-- **选中文本搜索**：在对话/正文里选中文字后，浮动工具栏显示「引用 + 搜索」两个按钮；点「搜索」自动打开 AI 搜索并预填选中文字、执行答疑搜索
-- 设置新增「**选中文本搜索**」开关（默认开启）：关闭后恢复原生引用浮层，不再注册选区扩展
-
-**说明**
-- 选区工具栏在新版 DSH 里一次只能显示一个插件操作面，因此通过替换原生 `conversation.chat.text-interaction` 的 `quote` 渲染器实现，引用逻辑仍复用内置 `insertQuote`
-- 禁用/卸载插件即恢复原生引用按钮；开关关闭会立即注销替换
-- 内置 quote 插件缺席时，注册自己的兜底手势，搜索按钮仍可用
-
-**测试**
-- 7 个自测套件全部通过；新增选区浮层注册、引用复用、搜索按钮、开关校验等断言
-
-### English
-
-**Added**
-- **Search selected text**: selecting text in a conversation now shows a "Quote + Search" toolbar; Search opens AI Search with the selection prefilled and runs an answer search
-- New "**Search selected text**" setting (on by default); turning it off restores the native quote surface and drops the selection extension
-
-**Notes**
-- A selection gesture shows one plugin surface in DSH, so this replaces the built-in `quote` renderer in `conversation.chat.text-interaction` while reusing the native `insertQuote` behavior
-- Disabling/uninstalling the plugin restores the native quote button; turning the setting off unregisters the replacement immediately
-- When the built-in quote plugin is absent, a fallback gesture keeps the Search button available
-
-**Testing**
-- All 7 test suites pass; added assertions for the selection surface registration, quote reuse, search button and setting validation
-
-## [1.4.6-beta.1] - 2026-11-22
-
-### 中文
+- **选中文本搜索**：在对话里选中文字后，浮动工具栏显示「引用 + 搜索」；点「搜索」自动打开 AI 搜索并预填选中文字，按设置执行
+- 选中搜索**普通模式**（单选）：答疑 / 百科 / 浏览 / 搜索引擎（百度、必应、Google、搜狗、自定义引擎；引擎模式直接跳结果页），默认百科
+- **答疑检测**（默认开启）：检测到问句时改用答疑，否则使用普通模式；不再按文本长度猜测模式
+- 选中搜索**打开位置**偏好：搜索主页 / 侧边栏（侧边栏需要 dsh-better-sidebar，不可用时自动回退主页）
+- 插件详情页资源：`docs/DETAIL.md` / `docs/DETAIL.zh.md` + 功能预览 `preview.svg`，locale 声明 `meta.detail`
 
 **改进**
-- 设置导航图标改用 DSH 0.2+ 官方 `settings.section.icon` 槽位注册（放大镜 SVG 组件），删除旧的 DOM 标记 + CSS mask 方案，修复新版 DSH 下「放大镜 + 默认齿轮」两个图标并存的问题；旧版 DSH 自动回退默认图标
-- 新增插件详情页资源：`docs/DETAIL.md` / `docs/DETAIL.zh.md` + 功能预览图 `docs/preview.svg`，并在 locale 里声明 `meta.detail`；新版插件管理页可展示图文详情
+- 设置导航图标改用 DSH 0.2+ 官方 `settings.section.icon` 槽位（放大镜 SVG），删除旧的 DOM 标记 + CSS mask，修复新版下「放大镜 + 默认齿轮」双图标并存的问题；旧版 DSH 自动回退默认图标
 - 搜索历史支持**单条删除**：每条历史旁的 × 可单独移除（`POST /history` 新增 `action=remove`）
-- 兼容性审计：对照 DSH 0.2.2 升级指南确认网搜索默认提供方、右键菜单图标等变化不影响本插件
-- 更新 locale 里的插件描述，补充官网识别、自定义 API/模型与历史来源筛选
+- 对照 DSH 0.2.2 升级指南完成兼容性审计（搜索默认提供方、右键菜单图标等变化不影响本插件）
+- 更新插件描述，补充官网识别、自定义 API/模型、历史来源筛选与选中文本搜索
+- 明确 MIT 许可证：仓库含 `LICENSE`，npm 包内也会附带
 
 **测试**
-- 7 个自测套件全部通过；新增设置图标槽位注册、单条历史删除、详情资源存在性等断言
+- 7 个自测套件全部通过；新增选中搜索、问句检测、普通模式/引擎/打开位置校验、单条历史删除、图标槽位注册等断言
 
 ### English
 
+Changes compared to the previous stable release 1.4.5-fix1.
+
+**Added**
+- **Search selected text**: selecting text in a conversation shows a "Quote + Search" toolbar; Search opens AI Search with the selection prefilled and runs according to settings
+- **Normal mode** for selection search (single choice): Answers / Encyclopedia / Browse / Search engine (Baidu, Bing, Google, Sogou or a custom engine; engine mode opens the result page directly), defaults to Encyclopedia
+- **Question detection** (on by default): question-like selections switch to Answers, everything else uses the normal mode; no more guessing from text length
+- **Open in** preference for selection search: search page / sidebar (sidebar needs dsh-better-sidebar and falls back to the search page)
+- Plugin detail resources: `docs/DETAIL.md` / `docs/DETAIL.zh.md` plus a feature preview `preview.svg`, declared through locale `meta.detail`
+
 **Changed**
-- The settings navigation icon now uses DSH 0.2+'s official `settings.section.icon` slot (a magnifier SVG component); the old DOM-marker + CSS-mask approach is removed, fixing the duplicated magnifier + default gear icon on newer DSH. Older DSH versions fall back to the default icon
-- Added plugin detail resources: `docs/DETAIL.md` / `docs/DETAIL.zh.md` plus a feature preview `docs/preview.svg`, declared through locale `meta.detail`, so the plugin manager can show a rich detail page
+- The settings navigation icon now uses DSH 0.2+'s official `settings.section.icon` slot (a magnifier SVG); the old DOM-marker + CSS-mask approach is removed, fixing the duplicated magnifier + default gear icon on newer DSH. Older DSH versions fall back to the default icon
 - Search history supports **single-entry removal** through the × next to each entry (`POST /history` gains `action=remove`)
-- Compatibility audit against the DSH 0.2.2 upgrade guides confirmed no impact from the web-search default provider, context-menu icon, or related changes
-- Refreshed the locale plugin description to cover official-site recognition, custom APIs/models and source-filtered history
+- Compatibility audit against the DSH 0.2.2 upgrade guides confirmed no impact from the web-search default provider, context-menu icons, or related changes
+- Refreshed the plugin description to cover official-site recognition, custom APIs/models, source-filtered history and selection search
+- Clarified the MIT license: the repository contains `LICENSE` and the npm package ships it too
 
 **Testing**
-- All 7 test suites pass; added assertions for the settings icon slot, single-entry history removal and detail resources
+- All 7 test suites pass; added assertions for selection search, question detection, normal-mode/engine/open-in validation, single-entry history removal and the settings icon slot
 
 ## [1.4.5-fix1] - 2026-11-01
 
